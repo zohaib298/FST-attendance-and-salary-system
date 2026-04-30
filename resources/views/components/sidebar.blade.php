@@ -23,9 +23,13 @@
 
         <nav class="flex-1 px-4 py-6 space-y-1 text-sm">
 
-            <a href="/employees"
+            <a href="/"
                class="block px-4 py-3 rounded hover:bg-gray-800 transition">
                 Employees Attendance
+            </a>
+            <a href="/attendance-report"
+               class="block px-4 py-3 rounded hover:bg-gray-800 transition">
+                Monthly Report
             </a>
             <a href="/payroll"
                class="block px-4 py-3 rounded hover:bg-gray-800 transition">

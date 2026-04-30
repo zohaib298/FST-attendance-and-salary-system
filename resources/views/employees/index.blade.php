@@ -3,7 +3,7 @@
 <div class="flex min-h-screen bg-gray-100">
 
     <x-sidebar></x-sidebar>
-
+ 
     <main class="flex-1 p-8">
 
         <div class="mb-8">
@@ -116,8 +116,8 @@
                             @foreach($employees as $emp)
                             <tr class="hover:bg-gray-50">
 
-                                <td class="p-3 font-medium text-gray-800">
-                                    {{ $emp->name }}
+                                <td  class="p-3 font-medium text-gray-800">
+                                   {{ $emp->name }}
                                 </td>
 
                                 <td class="text-center">
