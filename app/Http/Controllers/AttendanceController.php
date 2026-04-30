@@ -3,28 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
-use App\Models\Employee;
 use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
-
     public function store(Request $request)
     {
-        $date = date('Y-m-d');
+        // Validation (important)
+        $request->validate([
+            'attendance' => 'required|array',
+        ]);
+
+        // Use Laravel helper (better than date())
+        $today = now()->toDateString();
 
         foreach ($request->attendance as $employee_id => $status) {
+
+            // Extra safety (optional but good)
+            if (!in_array($status, ['present', 'absent', 'leave'])) {
+                continue;
+            }
+
             Attendance::updateOrCreate(
                 [
                     'employee_id' => $employee_id,
-                    'date' => $date
+                    'date' => $today,
                 ],
                 [
-                    'status' => $status
+                    'status' => $status,
                 ]
             );
         }
 
-        return back();
+        return back()->with('success', 'Attendance saved successfully');
     }
 }

@@ -10,19 +10,18 @@ use Carbon\Carbon;
 
 class PayrollController extends Controller
 {
-    // 📊 PAYROLL LIST
     public function index()
     {
         $employees = Employee::all();
 
         $payrolls = [];
 
-        $month = Carbon::now()->month;
-        $year  = Carbon::now()->year;
+        $month = request('month', Carbon::now()->month);
+        $year  = request('year', Carbon::now()->year);
 
         foreach ($employees as $emp) {
 
-            // 📅 Attendance
+            // 📅 Attendance counts
             $present = Attendance::where('employee_id', $emp->id)
                 ->where('status', 'present')
                 ->whereMonth('date', $month)
@@ -35,11 +34,23 @@ class PayrollController extends Controller
                 ->whereYear('date', $year)
                 ->count();
 
-            // 💰 Daily salary calculation
-            $dailySalary = $emp->basic_salary / 30;
+            $leave = Attendance::where('employee_id', $emp->id)
+                ->where('status', 'leave')
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->count();
 
-            $earned = $present * $dailySalary;
-            $deduction = $absent * $dailySalary;
+            // 💰 Per day salary
+            $perDay = $emp->basic_salary / 30;
+
+            // ✅ Paid days (present + leave)
+            $paidDays = $present + $leave;
+
+            // 💵 Earnings
+            $gross = $paidDays * $perDay;
+
+            // 💸 Deduction (only absent)
+            $deduction = $absent * $perDay;
 
             // 🎁 Bonus
             $bonus = Bonus::where('employee_id', $emp->id)
@@ -53,19 +64,30 @@ class PayrollController extends Controller
                 ->whereYear('date', $year)
                 ->sum('amount');
 
+            // 💼 Allowances (from employee table)
+            $allowances =
+                $emp->bike_allowance +
+                $emp->mobile_allowance +
+                $emp->commission +
+                $emp->other_allowance;
+
             // 🧾 Net Salary
-            $netSalary = ($earned + $bonus) - ($deduction + $advance);
+            $netSalary = $gross - $deduction + $bonus + $allowances - $advance;
+
+            // ❌ Never allow negative
+            $netSalary = max(0, $netSalary);
 
             $payrolls[] = (object)[
                 'employee' => $emp,
                 'present' => $present,
                 'absent' => $absent,
+                'leave' => $leave,
                 'bonus' => $bonus,
                 'advance' => $advance,
-                'net' => round($netSalary, 2)
+                'net' => round($netSalary),
             ];
         }
 
-        return view('payroll.index', compact('payrolls'));
+        return view('payroll.index', compact('payrolls', 'month', 'year'));
     }
 }

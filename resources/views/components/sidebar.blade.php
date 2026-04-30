@@ -40,6 +40,7 @@
                class="block px-4 py-3 rounded hover:bg-gray-800 transition">
                 Profiles
             </a>
+            
 
             
 

@@ -9,24 +9,35 @@ use Illuminate\Support\Facades\Route;
 
 
 
-// EMPLOYEES
 Route::get('/', [EmployeeController::class, 'index'])->name('employees.index');
+
+Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.list');
+
 Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
+
 Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
 
-Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit']);
+
+
+Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
+
 Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
 
-// ATTENDANCE
+Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+
+
+
+Route::get('/employees/profiles', [EmployeeController::class, 'profiles'])->name('employees.profiles');
+
+
+
 Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
 
-// PAYROLL
+Route::get('/attendance-report', [AttendanceReportController::class, 'index'])->name('attendance.report');
+
+
+
 Route::get('/payroll', [Payrollcontroller::class, 'index'])->name('payroll.index');
 
-// PROFILES
-Route::get('/employees/profiles', [EmployeeController::class, 'profiles']);
 
-Route::get('/attendance-report', [AttendanceReportController::class, 'index'])
-    ->name('attendance.report');
-
-Route::get('/salary-slip/{id}/{month}', [SalaryController::class, 'generateSlip']);
+Route::get('/salary-slip/{id}/{month}', [SalaryController::class, 'generateSlip'])->name('salary.slip');

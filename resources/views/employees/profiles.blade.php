@@ -2,28 +2,23 @@
 
 <div class="flex min-h-screen bg-gray-100">
 
-   
-    <x-sidebar></x-sidebar>
+    <x-sidebar />
 
-  
-    <div class="flex-1 p-6 bg-gray-100">
+    <div class="flex-1 p-6">
 
         <!-- HEADER -->
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex justify-between items-center mb-6">
 
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">
-                    Employees Profiles
+                    Employees Directory
                 </h1>
-                <p class="text-sm text-gray-500">
-                    Fire & Safety Pvt Ltd HR System
-                </p>
+                <p class="text-sm text-gray-500">HR System</p>
             </div>
 
-            <!-- BUTTON -->
             <a href="/employees/create"
-               class="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 transition">
-                Add Employee
+               class="bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700">
+                + Add Employee
             </a>
 
         </div>
@@ -33,20 +28,23 @@
 
             @foreach($employees as $emp)
 
-            <div class="bg-white border rounded-lg shadow hover:shadow-lg transition overflow-hidden">
+            <div class="bg-white rounded-xl shadow hover:shadow-lg transition">
 
                 <!-- HEADER -->
-                <div class="bg-red-600 p-4 text-white">
+                <div class="bg-red-600 text-white p-4 rounded-t-xl">
+
                     <h2 class="text-lg font-semibold">
                         {{ $emp->name }}
                     </h2>
-                    <p class="text-sm opacity-90">
+
+                    <p class="text-xs opacity-90">
                         {{ $emp->department }} • {{ $emp->branch }}
                     </p>
+
                 </div>
 
                 <!-- BODY -->
-                <div class="p-5 text-sm space-y-3 text-gray-700">
+                <div class="p-4 text-sm space-y-2">
 
                     <div class="flex justify-between">
                         <span class="text-gray-500">CNIC</span>
@@ -54,69 +52,56 @@
                     </div>
 
                     <div class="flex justify-between">
-                        <span class="text-gray-500">Basic Salary</span>
-                        <span class="font-bold text-green-600">
-                            {{ number_format($emp->basic_salary,2) }}
+                        <span class="text-gray-500">Salary</span>
+                        <span class="text-green-600 font-bold">
+                            {{ number_format($emp->basic_salary,0) }}
                         </span>
                     </div>
 
                     <hr>
 
-                    <div class="font-semibold text-green-600">Allowances</div>
+                    <!-- SIMPLE STATS -->
+                    <div class="grid grid-cols-2 gap-2 text-xs">
 
-                    <div class="flex justify-between">
-                        <span>Bike</span>
-                        <span>{{ number_format($emp->bike_allowance,2) }}</span>
-                    </div>
+                        <div class="bg-gray-100 p-2 rounded">
+                            <p class="text-gray-500">Bike</p>
+                            <p class="font-semibold">{{ $emp->bike_allowance }}</p>
+                        </div>
 
-                    <div class="flex justify-between">
-                        <span>Mobile</span>
-                        <span>{{ number_format($emp->mobile_allowance,2) }}</span>
-                    </div>
+                        <div class="bg-gray-100 p-2 rounded">
+                            <p class="text-gray-500">Mobile</p>
+                            <p class="font-semibold">{{ $emp->mobile_allowance }}</p>
+                        </div>
 
-                    <div class="flex justify-between">
-                        <span>Overtime</span>
-                        <span>{{ number_format($emp->overtime_rate,2) }}</span>
-                    </div>
+                        <div class="bg-gray-100 p-2 rounded">
+                            <p class="text-gray-500">Late</p>
+                            <p class="font-semibold text-red-500">{{ $emp->late_deduction }}</p>
+                        </div>
 
-                    <div class="flex justify-between">
-                        <span>Commission</span>
-                        <span>{{ number_format($emp->commission,2) }}</span>
-                    </div>
+                        <div class="bg-gray-100 p-2 rounded">
+                            <p class="text-gray-500">Absent</p>
+                            <p class="font-semibold text-red-500">{{ $emp->absent_deduction }}</p>
+                        </div>
 
-                    <div class="flex justify-between">
-                        <span>Other</span>
-                        <span>{{ number_format($emp->other_allowance,2) }}</span>
-                    </div>
-
-                    <hr>
-
-                    <div class="font-semibold text-red-600">Deductions</div>
-
-                    <div class="flex justify-between">
-                        <span>Late</span>
-                        <span>{{ number_format($emp->late_deduction,2) }}</span>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <span>Absent</span>
-                        <span>{{ number_format($emp->absent_deduction,2) }}</span>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <span>Allowed Leaves</span>
-                        <span class="font-semibold">
-                            {{ $emp->allowed_leaves }}
-                        </span>
                     </div>
 
                 </div>
 
                 <!-- FOOTER -->
-                <div class="p-4 bg-gray-50 text-right">
-                    <button class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 transition">
-                        View Profile
-                    </button>
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-b-xl">
+
+                    <!-- EDIT -->
+                    <a href="/employees/{{ $emp->id }}/edit"
+                       class="text-yellow-600 text-sm font-semibold hover:underline">
+                        Edit
+                    </a>
+
+                    <!-- SALARY SLIP -->
+                    <a href="/salary-slip/{{ $emp->id }}/{{ date('m') }}"
+                       class="bg-black text-white px-3 py-1 rounded text-xs">
+                        Slip
+                    </a>
+
                 </div>
 
             </div>
@@ -126,6 +111,7 @@
         </div>
 
     </div>
+
 </div>
 
 </x-layout>
