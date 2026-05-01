@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Advance;
 
 class Employee extends Model
 {
-protected $fillable = [
-     'name',
+    protected $fillable = [
+    'name',
     'cnic',
     'department',
     'branch',
@@ -19,6 +20,11 @@ protected $fillable = [
     'other_allowance',
     'late_deduction',
     'absent_deduction',
-    'allowed_leaves',
-];
+    'advance',
+    ];
+
+    public function advances()
+    {
+        return $this->hasMany(Advance::class, 'employee_id');
+    }
 }

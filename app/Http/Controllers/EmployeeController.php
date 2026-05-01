@@ -47,21 +47,37 @@ class EmployeeController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $request->validate([
-            'name' => 'required',
-            'department' => 'required',
-            'branch' => 'required',
-            'basic_salary' => 'required|numeric',
-        ]);
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'department' => 'required|string',
+        'branch' => 'required|string',
+        'basic_salary' => 'required|numeric|min:0',
+    ]);
 
-        $employee = Employee::findOrFail($id);
+    $employee = Employee::findOrFail($id);
 
-        $employee->update($request->all());
+    $employee->update([
+        'name' => $request->name,
+        'cnic' => $request->cnic,
+        'department' => $request->department,
+        'branch' => $request->branch,
+        'basic_salary' => $request->basic_salary,
 
-        return redirect('/employees')->with('success', 'Employee updated successfully');
-    }
+        'bike_allowance' => $request->bike_allowance ?? 0,
+        'mobile_allowance' => $request->mobile_allowance ?? 0,
+        'overtime_rate' => $request->overtime_rate ?? 0,
+        'commission' => $request->commission ?? 0,
+        'other_allowance' => $request->other_allowance ?? 0,
 
+        'late_deduction' => $request->late_deduction ?? 0,
+        'absent_deduction' => $request->absent_deduction ?? 0,
+        'advance' => $request->advance,
+
+    ]);
+
+    return redirect('/employees/profiles')->with('success', 'Employee updated successfully');
+}
     public function destroy($id)
     {
         Employee::findOrFail($id)->delete();

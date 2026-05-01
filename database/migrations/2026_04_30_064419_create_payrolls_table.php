@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
              $table->foreignId('employee_id')->constrained()->onDelete('cascade');
     $table->string('month');
-    $table->decimal('net_salary', 10, 2);
-    $table->decimal('total_deduction', 10, 2);
+    $table->decimal('net_salary', 10, 1);
+    $table->decimal('total_deduction', 10, 1);
             $table->timestamps();
         });
     }

@@ -28,31 +28,42 @@
 
             @foreach($employees as $emp)
 
+            @php
+                $totalAllowance = 
+                    $emp->bike_allowance +
+                    $emp->mobile_allowance +
+                    $emp->overtime_rate +
+                    $emp->commission +
+                    $emp->other_allowance;
+
+                $totalDeduction = 
+                    $emp->late_deduction +
+                    $emp->absent_deduction +
+                    ($emp->advance ?? 0);
+
+                $finalSalary = $emp->basic_salary + $totalAllowance - $totalDeduction;
+            @endphp
+
             <div class="bg-white rounded-xl shadow hover:shadow-lg transition">
 
                 <!-- HEADER -->
                 <div class="bg-red-600 text-white p-4 rounded-t-xl">
-
-                    <h2 class="text-lg font-semibold">
-                        {{ $emp->name }}
-                    </h2>
-
+                    <h2 class="text-lg font-semibold">{{ $emp->name }}</h2>
                     <p class="text-xs opacity-90">
                         {{ $emp->department }} • {{ $emp->branch }}
                     </p>
-
                 </div>
 
                 <!-- BODY -->
-                <div class="p-4 text-sm space-y-2">
+                <div class="p-4 text-sm space-y-2 text-gray-700">
 
                     <div class="flex justify-between">
-                        <span class="text-gray-500">CNIC</span>
+                        <span>CNIC</span>
                         <span>{{ $emp->cnic }}</span>
                     </div>
 
                     <div class="flex justify-between">
-                        <span class="text-gray-500">Salary</span>
+                        <span>Basic Salary</span>
                         <span class="text-green-600 font-bold">
                             {{ number_format($emp->basic_salary,0) }}
                         </span>
@@ -60,29 +71,64 @@
 
                     <hr>
 
-                    <!-- SIMPLE STATS -->
-                    <div class="grid grid-cols-2 gap-2 text-xs">
+                    <!-- ALLOWANCES -->
+                    <p class="text-green-600 font-semibold mt-2">Allowances</p>
 
-                        <div class="bg-gray-100 p-2 rounded">
-                            <p class="text-gray-500">Bike</p>
-                            <p class="font-semibold">{{ $emp->bike_allowance }}</p>
-                        </div>
+                    <div class="flex justify-between">
+                        <span>Bike</span>
+                        <span>{{ number_format($emp->bike_allowance,0) }}</span>
+                    </div>
 
-                        <div class="bg-gray-100 p-2 rounded">
-                            <p class="text-gray-500">Mobile</p>
-                            <p class="font-semibold">{{ $emp->mobile_allowance }}</p>
-                        </div>
+                    <div class="flex justify-between">
+                        <span>Mobile</span>
+                        <span>{{ number_format($emp->mobile_allowance,0) }}</span>
+                    </div>
 
-                        <div class="bg-gray-100 p-2 rounded">
-                            <p class="text-gray-500">Late</p>
-                            <p class="font-semibold text-red-500">{{ $emp->late_deduction }}</p>
-                        </div>
+                    <div class="flex justify-between">
+                        <span>Overtime</span>
+                        <span>{{ number_format($emp->overtime_rate,0) }}</span>
+                    </div>
 
-                        <div class="bg-gray-100 p-2 rounded">
-                            <p class="text-gray-500">Absent</p>
-                            <p class="font-semibold text-red-500">{{ $emp->absent_deduction }}</p>
-                        </div>
+                    <div class="flex justify-between">
+                        <span>Commission</span>
+                        <span>{{ number_format($emp->commission,0) }}</span>
+                    </div>
 
+                    <div class="flex justify-between">
+                        <span>Other</span>
+                        <span>{{ number_format($emp->other_allowance,0) }}</span>
+                    </div>
+
+                    <hr>
+
+                    <!-- DEDUCTIONS -->
+                    <p class="text-red-600 font-semibold mt-2">Deductions</p>
+
+                    <div class="flex justify-between">
+                        <span>Late Deduction</span>
+                        <span>{{ number_format($emp->late_deduction,0) }}</span>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <span>Absent Deduction</span>
+                        <span>{{ number_format($emp->absent_deduction,0) }}</span>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <span>Advance</span>
+                        <span class="font-semibold">
+                            {{ number_format($emp->advance ?? 0, 0) }}
+                        </span>
+                    </div>
+
+                    <hr>
+
+                    <!-- FINAL SALARY -->
+                    <div class="flex justify-between font-bold text-lg">
+                        <span>Final Salary</span>
+                        <span class="text-green-700 font-bold">
+    {{ number_format($finalSalary, 0) }}
+</span>
                     </div>
 
                 </div>
@@ -90,13 +136,11 @@
                 <!-- FOOTER -->
                 <div class="flex justify-between items-center bg-gray-50 p-3 rounded-b-xl">
 
-                    <!-- EDIT -->
                     <a href="/employees/{{ $emp->id }}/edit"
                        class="text-yellow-600 text-sm font-semibold hover:underline">
                         Edit
                     </a>
 
-                    <!-- SALARY SLIP -->
                     <a href="/salary-slip/{{ $emp->id }}/{{ date('m') }}"
                        class="bg-black text-white px-3 py-1 rounded text-xs">
                         Slip

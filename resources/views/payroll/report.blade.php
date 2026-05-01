@@ -5,11 +5,11 @@
     <x-sidebar />
 
     <!-- Main Content -->
-    <div class="flex-1 p-10">
+    <div class="flex-1 p-8 space-y-6">
 
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-2xl font-semibold text-gray-800">
+        <!-- HEADER -->
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
                 Monthly Attendance Report
             </h1>
             <p class="text-sm text-gray-500 mt-1">
@@ -17,8 +17,8 @@
             </p>
         </div>
 
-        <!-- Filter -->
-        <div class="bg-white border rounded-lg p-6 mb-8">
+        <!-- FILTER CARD -->
+        <div class="bg-white border rounded-xl shadow-sm p-6">
 
             <form method="GET" action="{{ route('attendance.report') }}"
                   class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -27,7 +27,7 @@
                 <div>
                     <label class="text-xs text-gray-500">Employee</label>
                     <select name="employee_id"
-                        class="w-full mt-1 border rounded-md px-3 py-2 text-sm">
+                        class="w-full mt-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-300 outline-none">
                         <option value="">Select Employee</option>
                         @foreach($employees as $emp)
                             <option value="{{ $emp->id }}"
@@ -43,13 +43,13 @@
                     <label class="text-xs text-gray-500">Month</label>
                     <input type="month" name="month"
                         value="{{ request('month') }}"
-                        class="w-full mt-1 border rounded-md px-3 py-2 text-sm">
+                        class="w-full mt-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-300 outline-none">
                 </div>
 
                 <!-- Button -->
                 <div class="flex items-end">
                     <button type="submit"
-                        class="w-full bg-gray-900 text-white text-sm py-2.5 rounded-md">
+                        class="w-full bg-gray-900 hover:bg-black text-white text-sm py-2.5 rounded-lg transition">
                         Generate Report
                     </button>
                 </div>
@@ -57,7 +57,7 @@
             </form>
         </div>
 
-        <!-- Summary -->
+        <!-- SUMMARY -->
         @if($attendances->isNotEmpty())
 
             @php
@@ -66,56 +66,72 @@
                 $leave   = $attendances->where('status','leave')->count();
             @endphp
 
-            <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                <div class="bg-white border rounded-lg p-5 text-center">
+                <div class="bg-white border rounded-xl shadow-sm p-6 text-center">
                     <p class="text-gray-500 text-xs">Present</p>
-                    <p class="text-xl font-semibold">{{ $present }}</p>
+                    <p class="text-2xl font-bold text-green-600 mt-1">{{ $present }}</p>
                 </div>
 
-                <div class="bg-white border rounded-lg p-5 text-center">
+                <div class="bg-white border rounded-xl shadow-sm p-6 text-center">
                     <p class="text-gray-500 text-xs">Absent</p>
-                    <p class="text-xl font-semibold">{{ $absent }}</p>
+                    <p class="text-2xl font-bold text-red-600 mt-1">{{ $absent }}</p>
                 </div>
 
-                <div class="bg-white border rounded-lg p-5 text-center">
+                <div class="bg-white border rounded-xl shadow-sm p-6 text-center">
                     <p class="text-gray-500 text-xs">Leave</p>
-                    <p class="text-xl font-semibold">{{ $leave }}</p>
+                    <p class="text-2xl font-bold text-yellow-600 mt-1">{{ $leave }}</p>
                 </div>
 
             </div>
         @endif
 
-        <!-- Table -->
-        <div class="bg-white border rounded-lg overflow-hidden">
+        <!-- TABLE -->
+        <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
 
             <table class="w-full text-sm">
 
-                <thead class="bg-gray-100 text-gray-600">
+                <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
                     <tr>
                         <th class="p-4 text-left">Date</th>
                         <th class="p-4 text-left">Status</th>
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody class="divide-y">
 
                     @forelse($attendances as $att)
-                        <tr class="border-t hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50 transition">
 
                             <td class="p-4 text-gray-700">
                                 {{ \Carbon\Carbon::parse($att->date)->format('d M Y') }}
                             </td>
 
-                            <td class="p-4 text-gray-600">
-                                {{ ucfirst($att->status) }}
+                            <td class="p-4">
+
+                                @if($att->status == 'present')
+                                    <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                                        Present
+                                    </span>
+
+                                @elseif($att->status == 'absent')
+                                    <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700">
+                                        Absent
+                                    </span>
+
+                                @else
+                                    <span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
+                                        Leave
+                                    </span>
+                                @endif
+
                             </td>
 
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="p-6 text-center text-gray-400">
-                                No records found
+                            <td colspan="2" class="p-8 text-center text-gray-400">
+                                No attendance records found
                             </td>
                         </tr>
                     @endforelse
