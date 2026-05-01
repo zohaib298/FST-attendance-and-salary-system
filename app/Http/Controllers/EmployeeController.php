@@ -8,88 +8,132 @@ use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::all();
+        $today = date('Y-m-d');
 
-        $today = now()->toDateString();
+        $employees = Employee::query();
 
-        $present = Attendance::whereDate('date', $today)->where('status', 'present')->count();
-        $absent  = Attendance::whereDate('date', $today)->where('status', 'absent')->count();
-        $leave   = Attendance::whereDate('date', $today)->where('status', 'leave')->count();
+        // search
+        if ($request->search) {
+            $employees->where('name', 'like', '%' . $request->search . '%')
+                      ->orWhere('cnic', 'like', '%' . $request->search . '%')
+                      ->orWhere('department', 'like', '%' . $request->search . '%');
+        }
 
-        return view('employees.index', compact('employees', 'present', 'absent', 'leave'));
+        // branch filter
+        if ($request->branch) {
+            $employees->where('branch', $request->branch);
+        }
+
+        $employees = $employees->latest()->get();
+
+        // attendance counts
+        $present = Attendance::whereDate('date', $today)
+            ->where('status', 'present')
+            ->count();
+
+        $absent = Attendance::whereDate('date', $today)
+            ->where('status', 'absent')
+            ->count();
+
+        $leave = Attendance::whereDate('date', $today)
+            ->where('status', 'leave')
+            ->count();
+
+        $todayAttendance = Attendance::whereDate('date', $today)
+            ->get()
+            ->keyBy('employee_id');
+
+        return view('employees.index', compact(
+            'employees',
+            'present',
+            'absent',
+            'leave',
+            'todayAttendance'
+        ));
     }
 
+    // 📌 create form
     public function create()
     {
         return view('employees.create');
     }
 
+    // 📌 save employee
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
             'department' => 'required',
             'branch' => 'required',
-            'basic_salary' => 'required|numeric',
+            'basic_salary' => 'required'
         ]);
 
         Employee::create($request->all());
 
-        return redirect('/employees')->with('success', 'Employee added successfully');
+        return redirect('/employees')->with('success', 'Employee added');
     }
 
+    // 📌 edit form
     public function edit($id)
     {
         $employee = Employee::findOrFail($id);
         return view('employees.edit', compact('employee'));
     }
 
+    // 📌 update employee
     public function update(Request $request, $id)
-{
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'department' => 'required|string',
-        'branch' => 'required|string',
-        'basic_salary' => 'required|numeric|min:0',
-    ]);
+    {
+        $employee = Employee::findOrFail($id);
 
-    $employee = Employee::findOrFail($id);
+        $employee->update([
+            'name' => $request->name,
+            'cnic' => $request->cnic,
+            'department' => $request->department,
+            'branch' => $request->branch,
+            'basic_salary' => $request->basic_salary,
 
-    $employee->update([
-        'name' => $request->name,
-        'cnic' => $request->cnic,
-        'department' => $request->department,
-        'branch' => $request->branch,
-        'basic_salary' => $request->basic_salary,
+            'bike_allowance' => $request->bike_allowance ?? 0,
+            'mobile_allowance' => $request->mobile_allowance ?? 0,
+            'overtime_rate' => $request->overtime_rate ?? 0,
+            'commission' => $request->commission ?? 0,
+            'other_allowance' => $request->other_allowance ?? 0,
 
-        'bike_allowance' => $request->bike_allowance ?? 0,
-        'mobile_allowance' => $request->mobile_allowance ?? 0,
-        'overtime_rate' => $request->overtime_rate ?? 0,
-        'commission' => $request->commission ?? 0,
-        'other_allowance' => $request->other_allowance ?? 0,
+            'late_deduction' => $request->late_deduction ?? 0,
+            'absent_deduction' => $request->absent_deduction ?? 0,
+            'advance' => $request->advance ?? 0,
+        ]);
 
-        'late_deduction' => $request->late_deduction ?? 0,
-        'absent_deduction' => $request->absent_deduction ?? 0,
-        'advance' => $request->advance,
+        return redirect('/employees')->with('success', 'Employee updated');
+    }
 
-    ]);
-
-    return redirect('/employees/profiles')->with('success', 'Employee updated successfully');
-}
+    // 📌 delete employee
     public function destroy($id)
     {
         Employee::findOrFail($id)->delete();
-        return redirect('/employees');
+
+        return redirect('/employees')->with('success', 'Employee deleted');
     }
 
-    public function profiles()
+    // 📌 profiles page (search cards)
+    public function profiles(Request $request)
     {
-        $employees = Employee::all();
+        $employees = Employee::query();
+
+        if ($request->search) {
+            $employees->where('name', 'like', '%' . $request->search . '%')
+                      ->orWhere('cnic', 'like', '%' . $request->search . '%')
+                      ->orWhere('department', 'like', '%' . $request->search . '%')
+                      ->orWhere('branch', 'like', '%' . $request->search . '%');
+        }
+
+        $employees = $employees->latest()->get();
+
         return view('employees.profiles', compact('employees'));
     }
 
+    // 📌 single employee page
     public function show($id)
     {
         $employee = Employee::findOrFail($id);

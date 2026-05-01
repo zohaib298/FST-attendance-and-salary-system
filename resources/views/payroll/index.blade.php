@@ -14,32 +14,27 @@
 
         <div class="bg-white rounded-lg shadow border p-6">
 
-            <!-- TOP BAR -->
-            <div class="flex justify-between items-center mb-4">
+            <!-- FILTER BAR -->
+           <form method="GET" class="flex gap-2 items-center mb-4">
 
-                <!-- SEARCH (future use) -->
-                <input type="text"
-                    placeholder="Search employee..."
-                    class="w-1/3 px-4 py-2 border rounded focus:ring focus:ring-blue-200">
+    <!-- SEARCH INPUT -->
+    <input type="text"
+        name="search"
+        value="{{ request('search') }}"
+        placeholder="Search employee..."
+        class="px-4 py-2 border rounded w-1/3 focus:ring focus:ring-blue-200">
 
-                <!-- MONTH FILTER -->
-                <form method="GET" class="flex gap-2">
+    <!-- SEARCH BUTTON -->
+    <button type="submit"
+        class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-black flex items-center gap-2">
+<div class="flex gap-2">
+    <i class="bi bi-search"></i>
+    Search
+</div>
+         
+    </button>
 
-                    <select name="month" class="border rounded px-3 py-2">
-                        @for($m = 1; $m <= 12; $m++)
-                            <option value="{{ $m }}" {{ $m == $month ? 'selected' : '' }}>
-                                {{ date('F', mktime(0,0,0,$m,1)) }}
-                            </option>
-                        @endfor
-                    </select>
-
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                        Filter
-                    </button>
-
-                </form>
-
-            </div>
+</form>
 
             <h2 class="text-lg font-semibold border-b pb-2 mb-4">
                 Payroll Sheet
@@ -64,51 +59,43 @@
 
                     <tbody class="divide-y">
 
-                        @foreach($payrolls as $p)
-                        <tr class="hover:bg-gray-50 transition">
+                        @forelse($payrolls as $p)
+                        <tr class="hover:bg-gray-50">
 
-                            <!-- Employee -->
                             <td class="p-3 font-semibold text-gray-800">
                                 {{ $p->employee->name }}
                             </td>
 
-                            <!-- Present -->
                             <td class="p-3 text-center">
                                 <span class="px-2 py-1 bg-green-100 text-green-700 rounded">
                                     {{ $p->present }}
                                 </span>
                             </td>
 
-                            <!-- Absent -->
                             <td class="p-3 text-center">
                                 <span class="px-2 py-1 bg-red-100 text-red-700 rounded">
                                     {{ $p->absent }}
                                 </span>
                             </td>
 
-                            <!-- Leave -->
                             <td class="p-3 text-center">
                                 <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded">
                                     {{ $p->leave }}
                                 </span>
                             </td>
 
-                            <!-- Bonus -->
                             <td class="p-3 text-center text-green-600 font-medium">
                                 {{ number_format($p->bonus, 0) }}
                             </td>
 
-                            <!-- Advance -->
                             <td class="p-3 text-center text-red-600 font-medium">
                                 {{ number_format($p->advance, 0) }}
                             </td>
 
-                            <!-- Net Salary -->
                             <td class="p-3 text-center font-bold text-blue-600">
                                 {{ number_format($p->net, 0) }}
                             </td>
 
-                            <!-- SLIP BUTTON -->
                             <td class="p-3 text-center">
                                 <a href="/salary-slip/{{ $p->employee->id }}/{{ $month }}"
                                    class="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600">
@@ -117,7 +104,14 @@
                             </td>
 
                         </tr>
-                        @endforeach
+
+                        @empty
+                        <tr>
+                            <td colspan="8" class="text-center p-4 text-gray-500">
+                                No employees found
+                            </td>
+                        </tr>
+                        @endforelse
 
                     </tbody>
 

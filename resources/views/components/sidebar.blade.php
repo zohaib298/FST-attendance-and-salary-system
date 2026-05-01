@@ -24,31 +24,31 @@
         <!-- NAV -->
         <nav class="flex-1 px-4 py-6 space-y-2 text-sm overflow-y-auto">
 
-            <a href="/"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition">
-                <i class="bi bi-clipboard-data text-lg"></i>
-                Attendance
-            </a>
+    <a href="/"
+       class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition">
+        <i class="bi bi-speedometer text-lg"></i>
+        Dashboard
+    </a>
 
-            <a href="/attendance-report"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition">
-                <i class="bi bi-bar-chart-line text-lg"></i>
-                Monthly Report
-            </a>
+    <a href="/attendance-report"
+       class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition">
+        <i class="bi bi-bar-chart-line text-lg"></i>
+        Monthly Report
+    </a>
 
-            <a href="/payroll"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition">
-                <i class="bi bi-cash-stack text-lg"></i>
-                Payroll
-            </a>
+    <a href="/payroll"
+       class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition">
+        <i class="bi bi-cash-stack text-lg"></i>
+        Payroll
+    </a>
 
-            <a href="/employees/profiles"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition">
-                <i class="bi bi-person-badge text-lg"></i>
-                Employee Profiles
-            </a>
+    <a href="/employees/profiles"
+       class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition">
+        <i class="bi bi-person-badge text-lg"></i>
+        Employee Profiles
+    </a>
 
-        </nav>
+</nav>
 
         <!-- FOOTER -->
         <div class="p-4 border-t border-gray-800 text-xs text-gray-500 text-center">

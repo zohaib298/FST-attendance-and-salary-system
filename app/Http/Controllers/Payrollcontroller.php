@@ -6,22 +6,35 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Bonus;
 use App\Models\Advance;
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class PayrollController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::all();
+        $month = $request->month ?? Carbon::now()->month;
+        $year  = $request->year ?? Carbon::now()->year;
+        $search = $request->search;
+
+        $query = Employee::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('cnic', 'like', "%{$search}%")
+                  ->orWhere('department', 'like', "%{$search}%")
+                  ->orWhere('branch', 'like', "%{$search}%");
+            });
+        }
+
+        $employees = $query->get();
 
         $payrolls = [];
 
-        $month = request('month', Carbon::now()->month);
-        $year  = request('year', Carbon::now()->year);
-
         foreach ($employees as $emp) {
 
-            // 📅 Attendance counts
+            // 📊 Attendance
             $present = Attendance::where('employee_id', $emp->id)
                 ->where('status', 'present')
                 ->whereMonth('date', $month)
@@ -40,42 +53,38 @@ class PayrollController extends Controller
                 ->whereYear('date', $year)
                 ->count();
 
-            // 💰 Per day salary
-            $perDay = $emp->basic_salary / 30;
+            // 💰 Salary base
+            $basic = $emp->basic_salary ?? 0;
+            $perDay = $basic / 30;
 
-            // ✅ Paid days (present + leave)
+            // ✔ earnings
             $paidDays = $present + $leave;
-
-            // 💵 Earnings
             $gross = $paidDays * $perDay;
 
-            // 💸 Deduction (only absent)
+            // ❌ deduction
             $deduction = $absent * $perDay;
 
-            // 🎁 Bonus
+            // 🎁 bonus
             $bonus = Bonus::where('employee_id', $emp->id)
                 ->whereMonth('date', $month)
                 ->whereYear('date', $year)
                 ->sum('amount');
 
-            // 💸 Advance
+            // 💸 advance
             $advance = Advance::where('employee_id', $emp->id)
                 ->whereMonth('date', $month)
                 ->whereYear('date', $year)
                 ->sum('amount');
 
-            // 💼 Allowances (from employee table)
+            // 🧾 allowances
             $allowances =
-                $emp->bike_allowance +
-                $emp->mobile_allowance +
-                $emp->commission +
-                $emp->other_allowance;
+                ($emp->bike_allowance ?? 0) +
+                ($emp->mobile_allowance ?? 0) +
+                ($emp->commission ?? 0) +
+                ($emp->other_allowance ?? 0);
 
-            // 🧾 Net Salary
+            // 💼 net salary
             $netSalary = $gross - $deduction + $bonus + $allowances - $advance;
-
-            // ❌ Never allow negative
-            $netSalary = max(0, $netSalary);
 
             $payrolls[] = (object)[
                 'employee' => $emp,
@@ -84,7 +93,7 @@ class PayrollController extends Controller
                 'leave' => $leave,
                 'bonus' => $bonus,
                 'advance' => $advance,
-                'net' => round($netSalary),
+                'net' => round(max(0, $netSalary)),
             ];
         }
 

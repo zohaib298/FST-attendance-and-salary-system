@@ -7,7 +7,7 @@
     <div class="flex-1 p-6">
 
         <!-- HEADER -->
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-4">
 
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">
@@ -23,20 +23,34 @@
 
         </div>
 
+        <!-- 🔍 SEARCH -->
+        <form method="GET" action="{{ route('employees.profiles') }}" class="mb-6 flex gap-2">
+
+            <input 
+                type="text"
+                name="search"
+                id="searchBox"
+                value="{{ request('search') }}"
+                placeholder="Search employee..."
+                class="border px-3 py-2 rounded w-72"
+            >
+
+        </form>
+
         <!-- GRID -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            @foreach($employees as $emp)
+            @forelse($employees as $emp)
 
             @php
-                $totalAllowance = 
+                $totalAllowance =
                     $emp->bike_allowance +
                     $emp->mobile_allowance +
                     $emp->overtime_rate +
                     $emp->commission +
                     $emp->other_allowance;
 
-                $totalDeduction = 
+                $totalDeduction =
                     $emp->late_deduction +
                     $emp->absent_deduction +
                     ($emp->advance ?? 0);
@@ -71,7 +85,6 @@
 
                     <hr>
 
-                    <!-- ALLOWANCES -->
                     <p class="text-green-600 font-semibold mt-2">Allowances</p>
 
                     <div class="flex justify-between">
@@ -101,34 +114,30 @@
 
                     <hr>
 
-                    <!-- DEDUCTIONS -->
                     <p class="text-red-600 font-semibold mt-2">Deductions</p>
 
                     <div class="flex justify-between">
-                        <span>Late Deduction</span>
+                        <span>Late</span>
                         <span>{{ number_format($emp->late_deduction,0) }}</span>
                     </div>
 
                     <div class="flex justify-between">
-                        <span>Absent Deduction</span>
+                        <span>Absent</span>
                         <span>{{ number_format($emp->absent_deduction,0) }}</span>
                     </div>
 
                     <div class="flex justify-between">
                         <span>Advance</span>
-                        <span class="font-semibold">
-                            {{ number_format($emp->advance ?? 0, 0) }}
-                        </span>
+                        <span>{{ number_format($emp->advance ?? 0,0) }}</span>
                     </div>
 
                     <hr>
 
-                    <!-- FINAL SALARY -->
                     <div class="flex justify-between font-bold text-lg">
                         <span>Final Salary</span>
-                        <span class="text-green-700 font-bold">
-    {{ number_format($finalSalary, 0) }}
-</span>
+                        <span class="text-green-700">
+                            {{ number_format($finalSalary, 0) }}
+                        </span>
                     </div>
 
                 </div>
@@ -141,21 +150,29 @@
                         Edit
                     </a>
 
-                    <a href="/salary-slip/{{ $emp->id }}/{{ date('m') }}"
-                       class="bg-black text-white px-3 py-1 rounded text-xs">
-                        Slip
-                    </a>
-
                 </div>
 
             </div>
 
-            @endforeach
+            @empty
+                <div class="col-span-3 text-center text-gray-500">
+                    No employee found
+                </div>
+            @endforelse
 
         </div>
 
     </div>
 
 </div>
+
+<!-- 🔥 AUTO RESET SEARCH -->
+<script>
+document.getElementById('searchBox').addEventListener('input', function () {
+    if (this.value.length === 0) {
+        window.location.href = "{{ route('employees.profiles') }}";
+    }
+});
+</script>
 
 </x-layout>
