@@ -7,14 +7,16 @@ use App\Models\Employee;
 use App\Models\Bonus;
 use App\Models\Advance;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
 class PayrollController extends Controller
 {
+    // =======================
+    // PAYROLL LIST
+    // =======================
     public function index(Request $request)
     {
-        $month = $request->month ?? Carbon::now()->month;
-        $year  = $request->year ?? Carbon::now()->year;
+        $month = $request->month ?? now()->month;
+        $year  = $request->year ?? now()->year;
         $search = $request->search;
 
         $query = Employee::query();
@@ -34,30 +36,21 @@ class PayrollController extends Controller
 
         foreach ($employees as $emp) {
 
-            $present = Attendance::where('employee_id', $emp->id)
-                ->where('status', 'present')
+            $attendances = Attendance::where('employee_id', $emp->id)
                 ->whereMonth('date', $month)
                 ->whereYear('date', $year)
-                ->count();
+                ->get();
 
-            $absent = Attendance::where('employee_id', $emp->id)
-                ->where('status', 'absent')
-                ->whereMonth('date', $month)
-                ->whereYear('date', $year)
-                ->count();
+            $present = $attendances->where('status', 'present')->count();
+            $absent  = $attendances->where('status', 'absent')->count();
+            $leave   = $attendances->where('status', 'leave')->count();
 
-            $leave = Attendance::where('employee_id', $emp->id)
-                ->where('status', 'leave')
-                ->whereMonth('date', $month)
-                ->whereYear('date', $year)
-                ->count();
-
-            $basic = $emp->basic_salary ?? 0;
-            $perDay = $basic / 30;
+            $basic = (float) ($emp->basic_salary ?? 0);
+            $perDay = $basic > 0 ? $basic / 30 : 0;
 
             $paidDays = $present + $leave;
-            $gross = $paidDays * $perDay;
 
+            $gross = $paidDays * $perDay;
             $deduction = $absent * $perDay;
 
             $bonus = Bonus::where('employee_id', $emp->id)
@@ -71,24 +64,91 @@ class PayrollController extends Controller
                 ->sum('amount');
 
             $allowances =
-                ($emp->bike_allowance ?? 0) +
-                ($emp->mobile_allowance ?? 0) +
-                ($emp->commission ?? 0) +
-                ($emp->other_allowance ?? 0);
+                (float) ($emp->bike_allowance ?? 0) +
+                (float) ($emp->mobile_allowance ?? 0) +
+                (float) ($emp->commission ?? 0) +
+                (float) ($emp->other_allowance ?? 0);
 
             $netSalary = $gross - $deduction + $bonus + $allowances - $advance;
 
             $payrolls[] = (object)[
-                'employee' => $emp,
-                'present' => $present,
-                'absent' => $absent,
-                'leave' => $leave,
-                'bonus' => $bonus,
-                'advance' => $advance,
-                'net' => round(max(0, $netSalary)),
+                'employee'   => $emp,
+                'present'    => $present,
+                'absent'     => $absent,
+                'leave'      => $leave,
+                'gross'      => $gross,
+                'deduction'  => $deduction,
+                'bonus'      => $bonus,
+                'advance'    => $advance,
+                'allowances' => $allowances,
+                'net'        => round(max(0, $netSalary)),
             ];
         }
 
         return view('payroll.index', compact('payrolls', 'month', 'year'));
+    }
+
+    // =======================
+    // SALARY SLIP (FINAL FIXED)
+    // =======================
+    public function salarySlip($id, Request $request)
+    {
+        $month = $request->month ?? now()->month;
+        $year  = $request->year ?? now()->year;
+
+        $employee = Employee::findOrFail($id);
+
+        // 🔥 IMPORTANT: attendance pass to view (FIXED)
+        $attendances = Attendance::where('employee_id', $employee->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->get();
+
+        $present = $attendances->where('status', 'present')->count();
+        $absent  = $attendances->where('status', 'absent')->count();
+        $leave   = $attendances->where('status', 'leave')->count();
+
+        $basic = (float) ($employee->basic_salary ?? 0);
+        $perDay = $basic > 0 ? $basic / 30 : 0;
+
+        $paidDays = $present + $leave;
+
+        $gross = $paidDays * $perDay;
+        $deduction = $absent * $perDay;
+
+        $bonus = Bonus::where('employee_id', $employee->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->sum('amount');
+
+        $advance = Advance::where('employee_id', $employee->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->sum('amount');
+
+        $allowances =
+            (float) ($employee->bike_allowance ?? 0) +
+            (float) ($employee->mobile_allowance ?? 0) +
+            (float) ($employee->commission ?? 0) +
+            (float) ($employee->other_allowance ?? 0);
+
+        $netSalary = $gross - $deduction + $bonus + $allowances - $advance;
+
+        return view('payroll.reportslip', [
+            'employee'    => $employee,
+            'attendances' => $attendances, // ✅ FIX IMPORTANT
+            'present'     => $present,
+            'absent'      => $absent,
+            'leave'       => $leave,
+            'basic'       => $basic,
+            'gross'       => $gross,
+            'deduction'   => $deduction,
+            'bonus'       => $bonus,
+            'advance'     => $advance,
+            'allowances'  => $allowances,
+            'net'         => round(max(0, $netSalary)),
+            'month'       => $month,
+            'year'        => $year,
+        ]);
     }
 }

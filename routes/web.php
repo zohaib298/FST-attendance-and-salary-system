@@ -37,3 +37,12 @@ Route::get('/employees/profiles', [EmployeeController::class, 'profiles'])
 
     Route::get('/attendance-report', [AttendanceReportController::class, 'index'])
     ->name('attendance.report');
+
+    Route::get('/payroll/report', [PayrollController::class, 'index']);
+
+
+    
+  Route::get('/payroll/salary-slip/{id}', [PayrollController::class, 'salarySlip'])
+    ->name('payroll.salaryslip');
+Route::get('/payroll/reportslip/{id}', [PayrollController::class, 'salarySlip'])
+    ->name('payroll.reportslip');

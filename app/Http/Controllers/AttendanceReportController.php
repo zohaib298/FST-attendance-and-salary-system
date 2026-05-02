@@ -5,38 +5,36 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AttendanceReportController extends Controller
 {
     public function index(Request $request)
     {
-        $employees = Employee::all();
+        $query = Attendance::with('employee');
 
-        $query = Attendance::query()->with('employee');
-
-        
-        if ($request->filled('employee_id')) {
+        // FILTER: employee
+        if ($request->employee_id) {
             $query->where('employee_id', $request->employee_id);
         }
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->whereHas('employee', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+        // FILTER: search
+        if ($request->search) {
+            $query->whereHas('employee', function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->search}%");
             });
         }
 
-        if ($request->filled('month')) {
-            $query->whereYear('date', substr($request->month, 0, 4))
-                  ->whereMonth('date', substr($request->month, 5, 2));
+        // FILTER: month
+        if ($request->month) {
+            $month = Carbon::parse($request->month);
+            $query->whereMonth('date', $month->month)
+                  ->whereYear('date', $month->year);
         }
 
-        $attendances = $query->orderBy('date', 'desc')->get();
+        $attendances = $query->latest()->get();
+        $employees = Employee::all();
 
-        return view('payroll.report', compact(
-            'employees',
-            'attendances'
-        ));
+        return view('payroll.report', compact('attendances', 'employees'));
     }
 }
