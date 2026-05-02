@@ -14,12 +14,11 @@ class AttendanceReportController extends Controller
 
         $query = Attendance::query()->with('employee');
 
-        // 👤 EMPLOYEE FILTER
+        
         if ($request->filled('employee_id')) {
             $query->where('employee_id', $request->employee_id);
         }
 
-        // 🔍 NAME SEARCH (optional but useful)
         if ($request->filled('search')) {
             $search = $request->search;
 
@@ -28,7 +27,6 @@ class AttendanceReportController extends Controller
             });
         }
 
-        // 📅 MONTH FILTER (SAFE VERSION)
         if ($request->filled('month')) {
             $query->whereYear('date', substr($request->month, 0, 4))
                   ->whereMonth('date', substr($request->month, 5, 2));

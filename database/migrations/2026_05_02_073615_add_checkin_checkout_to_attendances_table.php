@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('attendances', function (Blueprint $table) {
-            $table->time('check_in_time')->nullable();
-        $table->time('check_out_time')->nullable();
+        $table->time('check_in')->nullable();
+        $table->time('check_out')->nullable();
+
         });
     }
 

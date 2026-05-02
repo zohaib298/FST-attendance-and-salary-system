@@ -34,7 +34,6 @@ class PayrollController extends Controller
 
         foreach ($employees as $emp) {
 
-            // 📊 Attendance
             $present = Attendance::where('employee_id', $emp->id)
                 ->where('status', 'present')
                 ->whereMonth('date', $month)
@@ -53,37 +52,30 @@ class PayrollController extends Controller
                 ->whereYear('date', $year)
                 ->count();
 
-            // 💰 Salary base
             $basic = $emp->basic_salary ?? 0;
             $perDay = $basic / 30;
 
-            // ✔ earnings
             $paidDays = $present + $leave;
             $gross = $paidDays * $perDay;
 
-            // ❌ deduction
             $deduction = $absent * $perDay;
 
-            // 🎁 bonus
             $bonus = Bonus::where('employee_id', $emp->id)
                 ->whereMonth('date', $month)
                 ->whereYear('date', $year)
                 ->sum('amount');
 
-            // 💸 advance
             $advance = Advance::where('employee_id', $emp->id)
                 ->whereMonth('date', $month)
                 ->whereYear('date', $year)
                 ->sum('amount');
 
-            // 🧾 allowances
             $allowances =
                 ($emp->bike_allowance ?? 0) +
                 ($emp->mobile_allowance ?? 0) +
                 ($emp->commission ?? 0) +
                 ($emp->other_allowance ?? 0);
 
-            // 💼 net salary
             $netSalary = $gross - $deduction + $bonus + $allowances - $advance;
 
             $payrolls[] = (object)[

@@ -12,13 +12,11 @@ class SalaryController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        // total present days
         $presentDays = Attendance::where('employee_id', $id)
             ->where('status', 'present')
             ->whereMonth('date', $month)
             ->count();
 
-        // total absent days
         $absentDays = Attendance::where('employee_id', $id)
             ->where('status', 'absent')
             ->whereMonth('date', $month)
@@ -26,7 +24,6 @@ class SalaryController extends Controller
 
         $totalDays = $presentDays + $absentDays;
 
-        // salary calculation
         $basic = $employee->basic_salary;
 
         $dailySalary = $totalDays > 0 ? $basic / $totalDays : 0;

@@ -7,34 +7,39 @@ use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
-    public function store(Request $request)
-    {
-        // Validation (important)
-        $request->validate([
-            'attendance' => 'required|array',
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'attendance' => 'required|array',
+        'checkin' => 'nullable|array',
+        'checkout' => 'nullable|array',
+    ]);
 
-        // Use Laravel helper (better than date())
-        $today = now()->toDateString();
+    $today = now()->toDateString();
 
-        foreach ($request->attendance as $employee_id => $status) {
+    foreach ($request->attendance as $employee_id => $status) {
 
-            // Extra safety (optional but good)
-            if (!in_array($status, ['present', 'absent', 'leave'])) {
-                continue;
-            }
-
-            Attendance::updateOrCreate(
-                [
-                    'employee_id' => $employee_id,
-                    'date' => $today,
-                ],
-                [
-                    'status' => $status,
-                ]
-            );
+        // only allowed values
+        if (!in_array($status, ['present', 'absent', 'leave'])) {
+            continue;
         }
 
-        return back()->with('success', 'Attendance saved successfully');
+        Attendance::updateOrCreate(
+            [
+                'employee_id' => $employee_id,
+                'date' => $today,
+            ],
+            [
+                // MAIN STATUS
+                'status' => $status,
+
+                // CHECK IN / OUT
+                'check_in' => $request->checkin[$employee_id] ?? null,
+                'check_out' => $request->checkout[$employee_id] ?? null,
+            ]
+        );
     }
+
+    return back()->with('success', 'Attendance saved successfully');
+}
 }

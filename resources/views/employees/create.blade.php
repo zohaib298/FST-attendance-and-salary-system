@@ -18,7 +18,6 @@
 
                 @csrf
 
-                <!-- BASIC INFO -->
                 <div class="md:col-span-3">
                     <h2 class="text-lg font-bold text-gray-700 border-b pb-2">
                         Basic Information
@@ -27,30 +26,45 @@
 
                 <div>
                     <label class="text-sm text-gray-600">Full Name</label>
-                    <input type="text" name="name" class="border rounded-lg p-3 w-full">
+                    <input type="text" name="name" value="{{ old('name') }}" class="border rounded-lg p-3 w-full">
+                     @error('name')
+                    <p class="text-red-500 text-sm"> {{ $message }} </p>
+                @enderror
                 </div>
+               
 
                 <div>
                     <label class="text-sm text-gray-600">CNIC</label>
-                    <input type="text" name="cnic" class="border rounded-lg p-3 w-full">
+                    <input type="text" name="cnic" value="{{ old('cnic') }}" class="border rounded-lg p-3 w-full">
+                     @error('cnic')
+                    <p class="text-red-500 text-sm"> {{ $message }} </p>
+                @enderror
                 </div>
 
                 <div>
                     <label class="text-sm text-gray-600">Department</label>
-                    <input type="text" name="department" class="border rounded-lg p-3 w-full">
+                    <input type="text" name="department" value="{{ old('department') }}" class="border rounded-lg p-3 w-full">
+                     @error('department')
+                    <p class="text-red-500 text-sm"> {{ $message }} </p>
+                @enderror
                 </div>
 
                 <div>
                     <label class="text-sm text-gray-600">Branch</label>
-                    <input type="text" name="branch" class="border rounded-lg p-3 w-full">
+                    <input type="text" name="branch" value="{{ old('branch') }}" class="border rounded-lg p-3 w-full">
+                     @error('branch')
+                    <p class="text-red-500 text-sm"> {{ $message }} </p>
+                @enderror
                 </div>
 
                 <div>
                     <label class="text-sm text-gray-600">Basic Salary</label>
-                    <input type="number" name="basic_salary" class="border rounded-lg p-3 w-full">
+                    <input type="number" name="basic_salary" value="{{ old('basic_salary') }}" class="border rounded-lg p-3 w-full">
+                     @error('basic_salary')
+                    <p class="text-red-500 text-sm"> {{ $message }} </p>
+                @enderror
                 </div>
 
-                <!-- ALLOWANCES -->
                 <div class="md:col-span-3 mt-6">
                     <h2 class="text-lg font-bold text-green-600 border-b pb-2">
                         Allowances (Extra Benefits)
@@ -82,7 +96,6 @@
                     <input type="number" name="other_allowance" value="0" class="border rounded-lg p-3 w-full">
                 </div>
 
-                <!-- DEDUCTIONS -->
                 <div class="md:col-span-3 mt-6">
                     <h2 class="text-lg font-bold text-red-600 border-b pb-2">
                         Deductions (Salary Cuts)
@@ -104,7 +117,6 @@
                     <input type="number" name="allowed_leaves" value="0" class="border rounded-lg p-3 w-full">
                 </div>
 
-                <!-- BUTTON -->
                 <div class="md:col-span-3 flex justify-end mt-6">
                     <button class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700">
                         Save Employee

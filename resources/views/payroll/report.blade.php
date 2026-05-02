@@ -1,11 +1,12 @@
 <x-layout>
+
 <div class="flex min-h-screen bg-slate-100">
 
     <x-sidebar />
 
     <div class="flex-1">
 
-        <!-- TOP BAR -->
+        <!-- HEADER -->
         <div class="bg-white border-b sticky top-0 z-10">
             <div class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
@@ -14,11 +15,10 @@
                         Attendance Report
                     </h1>
                     <p class="text-xs text-gray-500">
-                        Filter employee attendance by month & status
+                        Complete attendance, overtime, night shift & bonus report
                     </p>
                 </div>
 
-                <!-- QUICK ACTION -->
                 <a href="{{ route('attendance.report') }}"
                    class="text-sm bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-black">
                     Reset
@@ -29,11 +29,10 @@
 
         <div class="p-6 space-y-6">
 
-            <!-- FILTER BAR -->
+            <!-- FILTERS -->
             <form method="GET"
                   class="bg-white border rounded-xl p-4 flex flex-col md:flex-row gap-3 md:items-end">
 
-                <!-- Employee -->
                 <div class="w-full md:w-1/4">
                     <label class="text-xs text-gray-500">Employee</label>
                     <select name="employee_id"
@@ -48,17 +47,15 @@
                     </select>
                 </div>
 
-                <!-- Search -->
                 <div class="w-full md:w-1/4">
                     <label class="text-xs text-gray-500">Search</label>
                     <input type="text"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Name, department..."
+                        placeholder="Name ..."
                         class="w-full mt-1 border rounded-lg px-3 py-2 text-sm">
                 </div>
 
-                <!-- Month -->
                 <div class="w-full md:w-1/4">
                     <label class="text-xs text-gray-500">Month</label>
                     <input type="month"
@@ -67,7 +64,6 @@
                         class="w-full mt-1 border rounded-lg px-3 py-2 text-sm">
                 </div>
 
-                <!-- BUTTON -->
                 <div class="w-full md:w-1/4">
                     <button type="submit"
                         class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm py-2.5 rounded-lg">
@@ -77,7 +73,7 @@
 
             </form>
 
-            <!-- SUMMARY CARDS -->
+            <!-- SUMMARY -->
             @if($attendances->count() > 0)
 
                 @php
@@ -116,6 +112,12 @@
                         <tr>
                             <th class="p-4 text-left">Employee</th>
                             <th class="p-4 text-left">Date</th>
+                            <th class="p-4 text-left">Check In</th>
+                            <th class="p-4 text-left">Check Out</th>
+                            <th class="p-4 text-center">Late</th>
+                            <th class="p-4 text-center">Overtime</th>
+                            <th class="p-4 text-center">Night</th>
+                            <th class="p-4 text-center">Bonus</th>
                             <th class="p-4 text-left">Status</th>
                         </tr>
                     </thead>
@@ -123,6 +125,29 @@
                     <tbody>
 
                         @forelse($attendances as $att)
+
+                            @php
+                                $status = $att->status;
+
+                                // late logic
+                                $lateCount = $att->late_count ?? 0;
+                                $extraAbsent = intdiv($lateCount, 3);
+
+                                if ($status != 'absent' && $extraAbsent > 0) {
+                                    $finalStatus = 'absent';
+                                } else {
+                                    $finalStatus = $status;
+                                }
+
+                                // overtime + night shift
+                                $overtimeHours = $att->overtime_hours ?? 0;
+                                $nightShift    = $att->night_shift ?? 0;
+
+                                // bonus calculation
+                                $overtimeBonus = $overtimeHours * 200;
+                                $nightBonus    = $nightShift * 500;
+                                $totalBonus    = $overtimeBonus + $nightBonus;
+                            @endphp
 
                             <tr class="border-t hover:bg-slate-50">
 
@@ -134,18 +159,38 @@
                                     {{ \Carbon\Carbon::parse($att->date)->format('d M Y') }}
                                 </td>
 
+                                <td class="p-4 text-gray-700">
+                                    {{ $att->check_in ?? '--' }}
+                                </td>
+
+                                <td class="p-4 text-gray-700">
+                                    {{ $att->check_out ?? '--' }}
+                                </td>
+
+                                <td class="p-4 text-center">
+                                    {{ $lateCount }}
+                                </td>
+
+                                <td class="p-4 text-center text-blue-600 font-medium">
+                                    {{ $overtimeHours }} hrs
+                                </td>
+
+                                <td class="p-4 text-center text-purple-600 font-medium">
+                                    {{ $nightShift }}
+                                </td>
+
+                                <td class="p-4 text-center text-green-700 font-bold">
+                                    {{ number_format($totalBonus,0) }}
+                                </td>
+
                                 <td class="p-4">
 
-                                    @php
-                                        $status = $att->status;
-                                    @endphp
-
                                     <span class="px-3 py-1 text-xs rounded-full
-                                        {{ $status=='present' ? 'bg-green-100 text-green-700' : '' }}
-                                        {{ $status=='absent' ? 'bg-red-100 text-red-700' : '' }}
-                                        {{ $status=='leave' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                        {{ $finalStatus=='present' ? 'bg-green-100 text-green-700' : '' }}
+                                        {{ $finalStatus=='absent' ? 'bg-red-100 text-red-700' : '' }}
+                                        {{ $finalStatus=='leave' ? 'bg-yellow-100 text-yellow-700' : '' }}
                                     ">
-                                        {{ ucfirst($status) }}
+                                        {{ ucfirst($finalStatus) }}
                                     </span>
 
                                 </td>
@@ -153,11 +198,13 @@
                             </tr>
 
                         @empty
+
                             <tr>
-                                <td colspan="3" class="text-center p-10 text-gray-400">
+                                <td colspan="9" class="text-center p-10 text-gray-400">
                                     No records found
                                 </td>
                             </tr>
+
                         @endforelse
 
                     </tbody>
@@ -170,4 +217,5 @@
     </div>
 
 </div>
+
 </x-layout>

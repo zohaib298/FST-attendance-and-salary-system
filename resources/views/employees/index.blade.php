@@ -2,7 +2,7 @@
 
 <div class="flex min-h-screen bg-gray-100">
 
-    <x-sidebar></x-sidebar>
+    <x-sidebar />
 
     <main class="flex-1 p-8">
 
@@ -14,13 +14,13 @@
             </p>
         </div>
 
-        <!-- SUMMARY CARDS -->
+        <!-- STATS -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
 
             <div class="bg-white p-4 rounded shadow border">
                 <p class="text-gray-500 text-sm">Total Employees</p>
                 <h2 class="text-2xl font-bold text-gray-800">
-                    {{ $employees->count() }}
+                    {{ $employees->count() ?? 0 }}
                 </h2>
             </div>
 
@@ -47,48 +47,27 @@
 
         </div>
 
-        <!-- ADD EMPLOYEE -->
-        <div class="bg-white border rounded-lg shadow-sm mb-8">
+        <!-- FILTER -->
+        <form method="GET" class="mb-6 flex gap-2">
 
-            <div class="px-6 py-4 border-b">
-                <h2 class="text-lg font-semibold text-gray-700">
-                    Add New Employee
-                </h2>
-            </div>
+            <input type="text"
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="Search employee..."
+                class="border px-3 py-2 rounded">
 
-            <form method="POST" action="{{ route('employees.store') }}"
-                  class="p-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+            <select name="branch" class="border px-3 py-2 rounded">
+                <option value="">All Branches</option>
+                <option value="Lahore" {{ request('branch') == 'Lahore' ? 'selected' : '' }}>Lahore</option>
+                <option value="Karachi" {{ request('branch') == 'Karachi' ? 'selected' : '' }}>Karachi</option>
+                <option value="Rawalpindi" {{ request('branch') == 'Rawalpindi' ? 'selected' : '' }}>Rawalpindi</option>
+            </select>
 
-                @csrf
+            <button class="bg-black text-white px-4 py-2 rounded">
+                Filter
+            </button>
 
-                <input type="text" name="name" placeholder="Name"
-                    class="border rounded px-3 py-2">
-
-                <input type="text" name="cnic" placeholder="CNIC"
-                    class="border rounded px-3 py-2">
-
-                <input type="text" name="department" placeholder="Department"
-                    class="border rounded px-3 py-2">
-
-                <select name="branch" class="border rounded px-3 py-2">
-                    <option value="">Branch</option>
-                    <option>Lahore</option>
-                    <option>Karachi</option>
-                    <option>Rawalpindi</option>
-                </select>
-
-                <input type="number" name="basic_salary" placeholder="Salary"
-                    class="border rounded px-3 py-2">
-
-                <div class="md:col-span-5 flex justify-end">
-                    <button class="bg-gray-900 text-white px-6 py-2 rounded hover:bg-black">
-                        Save Employee
-                    </button>
-                </div>
-
-            </form>
-
-        </div>
+        </form>
 
         @if(session('success'))
             <div class="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">
@@ -96,12 +75,13 @@
             </div>
         @endif
 
-        <!-- ATTENDANCE -->
+        <!-- ================= ATTENDANCE TABLE ================= -->
         <div class="bg-white border rounded-lg shadow-sm">
 
+            <!-- HEADER -->
             <div class="px-6 py-4 border-b flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-700">
-                    Today's Attendance
+                    Daily Attendance
                 </h2>
 
                 <span class="text-sm text-gray-500">
@@ -119,59 +99,95 @@
                         <thead class="bg-gray-100 text-gray-700">
                             <tr>
                                 <th class="p-3 text-left">Employee</th>
+                                <th class="p-3 text-left">Branch</th>
+
+                                <!-- NEW -->
+                                <th class="p-3 text-center">Check In</th>
+                                <th class="p-3 text-center">Check Out</th>
+
                                 <th class="p-3 text-center">Status</th>
                             </tr>
                         </thead>
 
-                       <tbody class="divide-y">
-@foreach($employees as $emp)
+                        <tbody class="divide-y">
 
-@php
-    $currentStatus = $todayAttendance[$emp->id]->status ?? 'present';
-@endphp
+                            @forelse($employees as $emp)
 
-<tr class="hover:bg-gray-50">
+                                @php
+                                    $att = $todayAttendance[$emp->id] ?? null;
+                                @endphp
 
-    <td class="p-3 font-medium text-gray-800">
-        {{ $emp->name }}
-    </td>
+                                <tr class="hover:bg-gray-50">
 
-    <td class="p-3 text-center">
+                                    <td class="p-3 font-medium text-gray-800">
+                                        {{ $emp->name }}
+                                    </td>
 
-        <!-- DROPDOWN (AUTO SELECT CURRENT STATUS) -->
-        <select name="attendance[{{ $emp->id }}]"
-            class="border rounded px-2 py-1">
+                                    <td class="p-3 text-gray-600">
+                                        {{ $emp->branch }}
+                                    </td>
 
-            <option value="present" {{ $currentStatus == 'present' ? 'selected' : '' }}>
-                🟢 Present
-            </option>
+                                    <!-- CHECK IN -->
+                                    <td class="p-3 text-center">
+                                        <input type="time"
+                                            name="checkin[{{ $emp->id }}]"
+                                            value="{{ $att->check_in ?? '' }}"
+                                            class="border rounded px-2 py-1">
+                                    </td>
 
-            <option value="absent" {{ $currentStatus == 'absent' ? 'selected' : '' }}>
-                🔴 Absent
-            </option>
+                                    <!-- CHECK OUT -->
+                                    <td class="p-3 text-center">
+                                        <input type="time"
+                                            name="checkout[{{ $emp->id }}]"
+                                            value="{{ $att->check_out ?? '' }}"
+                                            class="border rounded px-2 py-1">
+                                    </td>
 
-            <option value="leave" {{ $currentStatus == 'leave' ? 'selected' : '' }}>
-                🟡 Leave
-            </option>
+                                    <!-- STATUS -->
+                                    <td class="p-3 text-center">
 
-        </select>
+                                        <select name="attendance[{{ $emp->id }}]"
+                                            class="border rounded px-2 py-1">
 
-        <!-- CURRENT STATUS SHOW -->
-        <div class="text-xs mt-1">
-            @if($currentStatus == 'present')
-                <span class="text-green-600">Present</span>
-            @elseif($currentStatus == 'absent')
-                <span class="text-red-600">Absent</span>
-            @else
-                <span class="text-yellow-600">Leave</span>
-            @endif
-        </div>
+                                            <option value="present" {{ ($att->status ?? '') == 'present' ? 'selected' : '' }}>
+                                                🟢 Present
+                                            </option>
 
-    </td>
+                                            <option value="absent" {{ ($att->status ?? '') == 'absent' ? 'selected' : '' }}>
+                                                🔴 Absent
+                                            </option>
 
-</tr>
-@endforeach
-</tbody>
+                                            <option value="leave" {{ ($att->status ?? '') == 'leave' ? 'selected' : '' }}>
+                                                🟡 Leave
+                                            </option>
+
+                                        </select>
+
+                                        <div class="text-xs mt-1">
+                                            <span class="
+                                                {{ ($att->status ?? '') == 'present' ? 'text-green-600' : '' }}
+                                                {{ ($att->status ?? '') == 'absent' ? 'text-red-600' : '' }}
+                                                {{ ($att->status ?? '') == 'leave' ? 'text-yellow-600' : '' }}
+                                            ">
+                                                {{ ucfirst($att->status ?? 'present') }}
+                                            </span>
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            @empty
+
+                                <tr>
+                                    <td colspan="5" class="text-center p-4 text-gray-500">
+                                        No employees found
+                                    </td>
+                                </tr>
+
+                            @endforelse
+
+                        </tbody>
 
                     </table>
 

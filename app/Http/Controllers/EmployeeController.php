@@ -14,21 +14,18 @@ class EmployeeController extends Controller
 
         $employees = Employee::query();
 
-        // search
         if ($request->search) {
             $employees->where('name', 'like', '%' . $request->search . '%')
                       ->orWhere('cnic', 'like', '%' . $request->search . '%')
                       ->orWhere('department', 'like', '%' . $request->search . '%');
         }
 
-        // branch filter
         if ($request->branch) {
             $employees->where('branch', $request->branch);
         }
 
         $employees = $employees->latest()->get();
 
-        // attendance counts
         $present = Attendance::whereDate('date', $today)
             ->where('status', 'present')
             ->count();
@@ -54,17 +51,16 @@ class EmployeeController extends Controller
         ));
     }
 
-    // 📌 create form
     public function create()
     {
         return view('employees.create');
     }
 
-    // 📌 save employee
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
+            'cnic' => 'required' ,
             'department' => 'required',
             'branch' => 'required',
             'basic_salary' => 'required'
@@ -75,14 +71,12 @@ class EmployeeController extends Controller
         return redirect('/employees')->with('success', 'Employee added');
     }
 
-    // 📌 edit form
     public function edit($id)
     {
         $employee = Employee::findOrFail($id);
         return view('employees.edit', compact('employee'));
     }
 
-    // 📌 update employee
     public function update(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
@@ -108,7 +102,6 @@ class EmployeeController extends Controller
         return redirect('/employees')->with('success', 'Employee updated');
     }
 
-    // 📌 delete employee
     public function destroy($id)
     {
         Employee::findOrFail($id)->delete();
@@ -116,7 +109,6 @@ class EmployeeController extends Controller
         return redirect('/employees')->with('success', 'Employee deleted');
     }
 
-    // 📌 profiles page (search cards)
     public function profiles(Request $request)
     {
         $employees = Employee::query();

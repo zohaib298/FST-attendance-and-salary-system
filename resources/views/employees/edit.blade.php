@@ -6,7 +6,6 @@
 
     <div class="flex-1 p-6">
 
-        <!-- HEADER -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800">
                 Edit Employee Details
@@ -15,15 +14,12 @@
                 Update employee record in HR system
             </p>
         </div>
-
-        <!-- FORM CARD -->
         <div class="bg-white p-6 rounded-xl shadow max-w-4xl">
 
 <form method="POST" action="{{ route('employees.update', $employee->id) }}">
     @csrf
     @method('PUT')
 
-            <!-- BASIC INFO -->
             <h2 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">
                 Basic Information
             </h2>
@@ -56,7 +52,6 @@
 
             </div>
 
-            <!-- SALARY -->
             <h2 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">
                 Salary Information
             </h2>
@@ -71,7 +66,6 @@
 
             </div>
 
-            <!-- ALLOWANCES -->
             <h2 class="text-lg font-semibold text-green-600 mb-4 border-b pb-2">
                 Allowances
             </h2>
@@ -110,7 +104,6 @@
 
             </div>
 
-            <!-- DEDUCTIONS -->
             <h2 class="text-lg font-semibold text-red-600 mb-4 border-b pb-2">
                 Deductions
             </h2>
@@ -140,7 +133,6 @@
 
             </div>
 
-            <!-- BUTTON -->
             <div class="text-right">
                 <button class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                     Update Employee
