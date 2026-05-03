@@ -5,8 +5,6 @@
     <x-sidebar></x-sidebar>
 
     <div class="flex-1 p-6">
-
-        <!-- HEADER -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800">Monthly Payroll</h1>
             <p class="text-sm text-gray-500">Employee salary & attendance summary</p>
@@ -14,36 +12,26 @@
 
         <div class="bg-white rounded-lg shadow border p-6">
 
-            <!-- FILTER BAR -->
-           <form method="GET" class="flex gap-2 items-center mb-4">
+            <form method="GET" class="flex gap-2 items-center mb-4">
+                <input type="text"
+                    name="search"
+                    value="{{ request('search') }}"
+                    placeholder="Search employee..."
+                    class="px-4 py-2 border rounded w-1/3 focus:ring focus:ring-blue-200">
 
-    <!-- SEARCH INPUT -->
-    <input type="text"
-        name="search"
-        value="{{ request('search') }}"
-        placeholder="Search employee..."
-        class="px-4 py-2 border rounded w-1/3 focus:ring focus:ring-blue-200">
-
-    <!-- SEARCH BUTTON -->
-    <button type="submit"
-        class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-black flex items-center gap-2">
-<div class="flex gap-2">
-    <i class="bi bi-search"></i>
-    Search
-</div>
-         
-    </button>
-
-</form>
+                <button type="submit"
+                    class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-black flex items-center gap-2">
+                    <i class="bi bi-search"></i>
+                    Search
+                </button>
+            </form>
 
             <h2 class="text-lg font-semibold border-b pb-2 mb-4">
                 Payroll Sheet
             </h2>
 
             <div class="overflow-x-auto">
-
                 <table class="w-full text-sm">
-
                     <thead>
                         <tr class="bg-gray-100 text-gray-700">
                             <th class="p-3 text-left">Employee</th>
@@ -52,6 +40,7 @@
                             <th class="p-3 text-center">Leave</th>
                             <th class="p-3 text-center text-green-600">Bonus</th>
                             <th class="p-3 text-center text-red-600">Advance</th>
+                            <th class="p-3 text-center text-purple-600">Running Salary</th>
                             <th class="p-3 text-center">Net Salary</th>
                             <th class="p-3 text-center">Salary Slip</th>
                         </tr>
@@ -85,11 +74,16 @@
                             </td>
 
                             <td class="p-3 text-center text-green-600 font-medium">
-                                {{ number_format($p->bonus, 0) }}
+                                {{ number_format($p->bonus ?? 0, 0) }}
                             </td>
 
                             <td class="p-3 text-center text-red-600 font-medium">
-                                {{ number_format($p->advance, 0) }}
+                                {{ number_format($p->advance ?? 0, 0) }}
+                            </td>
+
+                            <!-- ✅ RUNNING SALARY -->
+                            <td class="p-3 text-center font-bold text-purple-600">
+                                {{ number_format($p->running, 0) }}
                             </td>
 
                             <td class="p-3 text-center font-bold text-blue-600">
@@ -107,7 +101,7 @@
 
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center p-4 text-gray-500">
+                            <td colspan="9" class="text-center p-4 text-gray-500">
                                 No employees found
                             </td>
                         </tr>
@@ -116,7 +110,6 @@
                     </tbody>
 
                 </table>
-
             </div>
 
         </div>

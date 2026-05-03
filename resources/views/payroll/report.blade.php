@@ -81,77 +81,53 @@
 
                         @forelse($attendances as $att)
 
-                            @php
-                                $late = 0;
-                                $overtimeMinutes = 0;
-                                $nightMinutes = 0;
-
-                                $checkIn = $att->check_in
-                                    ? \Carbon\Carbon::parse($att->date.' '.$att->check_in)
-                                    : null;
-
-                                $checkOut = $att->check_out
-                                    ? \Carbon\Carbon::parse($att->date.' '.$att->check_out)
-                                    : null;
-
-                                $officeStart = \Carbon\Carbon::parse($att->date.' 09:30:00');
-                                $officeEnd   = \Carbon\Carbon::parse($att->date.' 19:00:00');
-                                $nightLimit  = \Carbon\Carbon::parse($att->date.' 22:00:00');
-
-                                if ($checkIn && $checkIn->gt($officeStart)) {
-                                    $late = 1;
-                                }
-
-                                if ($checkOut && $checkOut->gt($officeEnd)) {
-                                    $overtimeMinutes = $officeEnd->diffInMinutes($checkOut);
-                                }
-
-                                if ($checkOut && $checkOut->gt($nightLimit)) {
-                                    $nightMinutes = $nightLimit->diffInMinutes($checkOut);
-                                }
-
-                                $status = $att->status;
-                            @endphp
-
                             <tr class="hover:bg-gray-50 transition">
 
+                                <!-- NAME -->
                                 <td class="p-4 font-medium text-gray-800">
                                     {{ $att->employee->name ?? 'N/A' }}
                                 </td>
 
+                                <!-- DATE -->
                                 <td class="p-4 text-gray-600">
                                     {{ \Carbon\Carbon::parse($att->date)->format('d M Y') }}
                                 </td>
 
+                                <!-- CHECK IN -->
                                 <td class="p-4">
                                     {{ $att->check_in ? \Carbon\Carbon::parse($att->check_in)->format('h:i A') : '--' }}
                                 </td>
 
+                                <!-- CHECK OUT -->
                                 <td class="p-4">
                                     {{ $att->check_out ? \Carbon\Carbon::parse($att->check_out)->format('h:i A') : '--' }}
                                 </td>
 
+                                <!-- LATE -->
                                 <td class="p-4 text-center text-red-600 font-semibold">
-                                    {{ $late }}
+                                    {{ $att->late ?? 0 }}
                                 </td>
 
+                                <!-- OVERTIME (FROM DB) -->
                                 <td class="p-4 text-center text-blue-600 font-semibold">
-                                    {{ round($overtimeMinutes / 60, 2) }} hrs
+                                    {{ round(($att->overtime_minutes ?? 0) / 60, 2) }} hrs
                                 </td>
 
+                                <!-- NIGHT (FROM DB) -->
                                 <td class="p-4 text-center text-purple-600 font-semibold">
-                                    {{ $nightMinutes }}
+                                    {{ $att->night ?? 0 }}
                                 </td>
 
+                                <!-- STATUS -->
                                 <td class="p-4 text-center">
 
                                     <div class="flex items-center justify-center gap-2">
 
                                         <span class="px-3 py-1 text-xs rounded-full font-medium
-                                            {{ $status=='present' ? 'bg-green-100 text-green-700' : '' }}
-                                            {{ $status=='absent' ? 'bg-red-100 text-red-700' : '' }}
-                                            {{ $status=='leave' ? 'bg-yellow-100 text-yellow-700' : '' }}">
-                                            {{ ucfirst($status) }}
+                                            {{ $att->status=='present' ? 'bg-green-100 text-green-700' : '' }}
+                                            {{ $att->status=='absent' ? 'bg-red-100 text-red-700' : '' }}
+                                            {{ $att->status=='leave' ? 'bg-yellow-100 text-yellow-700' : '' }}">
+                                            {{ ucfirst($att->status) }}
                                         </span>
 
                                         <!-- SLIP -->

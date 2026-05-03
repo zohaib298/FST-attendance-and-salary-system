@@ -46,3 +46,24 @@ Route::get('/employees/profiles', [EmployeeController::class, 'profiles'])
     ->name('payroll.salaryslip');
 Route::get('/payroll/reportslip/{id}', [PayrollController::class, 'salarySlip'])
     ->name('payroll.reportslip');
+
+  
+    Route::get('/attendance/employee/{id}', [AttendanceController::class, 'employeeMonthly']);
+
+    Route::get('/attendance/template', [AttendanceController::class, 'downloadTemplate'])
+    ->name('attendance.template');
+
+Route::post('/attendance/import', [AttendanceController::class, 'import'])
+    ->name('attendance.import');
+    Route::post('/attendance/bulk-store', [AttendanceController::class, 'bulkStore'])
+    ->name('attendance.bulk-store');
+
+    Route::get('/', [EmployeeController::class, 'index'])->name('dashboard');
+    Route::post('/settings/update', [AttendanceController::class, 'updateSettings'])->name('settings.update');
+
+    Route::post('/monthly/summary/save', [AttendanceController::class, 'monthlySummarySave'])
+    ->name('monthly.summary.save');
+ 
+Route::post('/employee/store-monthly', [EmployeeController::class, 'storeWithMonthly'])
+    ->name('employee.store');
+ 

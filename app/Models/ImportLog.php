@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Advance extends Model
+class ImportLog extends Model
 {
-    
+    //
 }
