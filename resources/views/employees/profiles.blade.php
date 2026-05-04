@@ -35,162 +35,154 @@
                                    bg-white text-sm transition"
                         >
                         <div class="absolute left-3 top-3 text-gray-400">
-                            <i class="bi bi-search"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- SLIDER -->
-        <div class="relative">
+        <!-- GRID LAYOUT - No Slider, Fixed Height Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            
+            @forelse($employees as $emp)
 
-            <!-- LEFT -->
-            <button onclick="move(-1)"
-                class="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white border shadow-md text-gray-700 p-3 rounded-full hover:bg-gray-100">
-                <i class="bi bi-chevron-left text-xl"></i>
-            </button>
+            @php
+                $empAtt  = $attendanceData[$emp->id] ?? collect();
+                $advance = (float) $empAtt->sum('advance');
+                $night   = (float) $empAtt->sum('night');
 
-            <!-- RIGHT -->
-            <button onclick="move(1)"
-                class="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white border shadow-md text-gray-700 p-3 rounded-full hover:bg-gray-100">
-                <i class="bi bi-chevron-right text-xl"></i>
-            </button>
+                $totalAllowance =
+                    (float) ($emp->bike_allowance ?? 0) +
+                    (float) ($emp->mobile_allowance ?? 0) +
+                    (float) ($emp->overtime_rate ?? 0) +
+                    (float) ($emp->commission ?? 0) +
+                    (float) ($emp->other_allowance ?? 0) +
+                    $night;
 
-            <!-- VIEWPORT -->
-            <div class="overflow-hidden px-10">
-                <div id="slider" class="flex transition-transform duration-500">
+                $totalDeduction =
+                    (float) ($emp->late_deduction ?? 0) +
+                    (float) ($emp->absent_deduction ?? 0) +
+                    $advance;
 
-                    @forelse($employees as $emp)
+                $finalSalary = (float) $emp->basic_salary + $totalAllowance - $totalDeduction;
+            @endphp
 
-                    @php
-                        // ✅ Attendance table se advance aur night lo
-                        $empAtt  = $attendanceData[$emp->id] ?? collect();
-                        $advance = (float) $empAtt->sum('advance');
-                        $night   = (float) $empAtt->sum('night');
+            <!-- CARD - Fixed Height -->
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full">
 
-                        $totalAllowance =
-                            (float) ($emp->bike_allowance ?? 0) +
-                            (float) ($emp->mobile_allowance ?? 0) +
-                            (float) ($emp->overtime_rate ?? 0) +
-                            (float) ($emp->commission ?? 0) +
-                            (float) ($emp->other_allowance ?? 0) +
-                            $night; // ✅ night bhi add
+                <!-- CARD HEADER -->
+                <div class="bg-gradient-to-r from-red-600 to-red-500 px-5 py-4 rounded-t-2xl">
+                    <h2 class="text-lg font-bold text-white truncate">{{ $emp->name }}</h2>
+                    <p class="text-xs text-red-100 mt-1 truncate">
+                        {{ $emp->department ?? 'N/A' }} 
+                        @if($emp->branch) • {{ $emp->branch }} @endif
+                    </p>
+                </div>
 
-                        $totalDeduction =
-                            (float) ($emp->late_deduction ?? 0) +
-                            (float) ($emp->absent_deduction ?? 0) +
-                            $advance; // ✅ attendance se advance
-
-                        $finalSalary = (float) $emp->basic_salary + $totalAllowance - $totalDeduction;
-                    @endphp
-
-                    <!-- CARD -->
-                    <div class="flex-shrink-0 w-1/3 p-3">
-                        <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition border border-gray-100">
-
-                            <!-- CARD HEADER -->
-                            <div class="bg-gradient-to-r from-red-600 to-red-500 text-white p-4 rounded-t-2xl">
-                                <h2 class="text-lg font-semibold">{{ $emp->name }}</h2>
-                                <p class="text-xs opacity-90">
-                                    {{ $emp->department }} • {{ $emp->branch }}
-                                </p>
-                            </div>
-
-                            <!-- CARD BODY -->
-                            <div class="p-5 text-sm space-y-3">
-
-                                <div class="flex justify-between text-gray-600">
-                                    <span>CNIC</span>
-                                    <span class="text-gray-900 font-medium">{{ $emp->cnic }}</span>
-                                </div>
-
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Basic Salary</span>
-                                    <span class="text-green-600 font-bold">
-                                        {{ number_format($emp->basic_salary, 0) }}
-                                    </span>
-                                </div>
-
-                                <div class="border-t pt-3 flex justify-between">
-                                    <span class="font-semibold text-gray-700">Final Salary</span>
-                                    <span class="{{ $finalSalary < 0 ? 'text-red-600' : 'text-green-700' }} font-bold text-lg">
-                                        {{ number_format($finalSalary, 0) }}
-                                    </span>
-                                </div>
-
-                                <button onclick="toggleDetails({{ $emp->id }}, this)"
-                                    class="mt-3 text-gray-600 text-sm font-medium flex items-center gap-2 hover:text-red-600 transition">
-                                    <i class="bi bi-chevron-down transition-transform duration-300"></i>
-                                    View Full Details
-                                </button>
-
-                            </div>
-
-                            <!-- EXPAND -->
-                            <div id="details-{{ $emp->id }}"
-                                 class="max-h-0 overflow-hidden transition-all duration-500 bg-gray-50 border-t px-5 text-sm space-y-5">
-
-                                <!-- ALLOWANCES -->
-                                <div class="pt-4">
-                                    <h3 class="text-green-600 font-semibold mb-2">Allowances</h3>
-                                    <div class="space-y-1 text-gray-700">
-                                        <div class="flex justify-between"><span>Bike</span><span>{{ number_format($emp->bike_allowance ?? 0, 0) }}</span></div>
-                                        <div class="flex justify-between"><span>Mobile</span><span>{{ number_format($emp->mobile_allowance ?? 0, 0) }}</span></div>
-                                        <div class="flex justify-between"><span>Overtime</span><span>{{ number_format($emp->overtime_rate ?? 0, 0) }}</span></div>
-                                        <div class="flex justify-between"><span>Commission</span><span>{{ number_format($emp->commission ?? 0, 0) }}</span></div>
-                                        <div class="flex justify-between"><span>Other</span><span>{{ number_format($emp->other_allowance ?? 0, 0) }}</span></div>
-                                        <!-- ✅ Night bonus bhi show karo -->
-                                        <div class="flex justify-between text-green-600 font-medium">
-                                            <span>Night Bonus</span>
-                                            <span>{{ number_format($night, 0) }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- DEDUCTIONS -->
-                                <div class="pb-4">
-                                    <h3 class="text-red-600 font-semibold mb-2">Deductions</h3>
-                                    <div class="space-y-1 text-gray-700">
-                                        <div class="flex justify-between"><span>Late</span><span>{{ number_format($emp->late_deduction ?? 0, 0) }}</span></div>
-                                        <div class="flex justify-between"><span>Absent</span><span>{{ number_format($emp->absent_deduction ?? 0, 0) }}</span></div>
-                                        <!-- ✅ Attendance table se advance -->
-                                        <div class="flex justify-between text-red-600 font-medium">
-                                            <span>Advance</span>
-                                            <span>{{ number_format($advance, 0) }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <!-- FOOTER -->
-                            <div class="px-5 py-3 border-t flex items-center justify-between gap-4 bg-white rounded-b-2xl">
-                                <a href="/employees/{{ $emp->id }}/edit"
-                                   class="text-yellow-600 text-sm font-semibold hover:underline">
-                                    Edit
-                                </a>
-                                <form action="{{ route('employees.destroy', $emp->id) }}"
-                                      method="POST"
-                                      onsubmit="return confirm('Delete this employee?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            class="text-red-600 text-sm font-semibold hover:underline">
-                                        Delete
-                                    </button>
-                                </form>
-                            </div>
-
+                <!-- CARD BODY -->
+                <div class="p-4 flex-1">
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">CNIC</span>
+                            <span class="font-medium text-gray-800">{{ $emp->cnic ?? 'N/A' }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Contact</span>
+                            <span class="font-medium text-gray-800">{{ $emp->contact ?? 'N/A' }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Joining Date</span>
+                            <span class="font-medium text-gray-800">{{ $emp->joining_date ? date('d M Y', strtotime($emp->joining_date)) : 'N/A' }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm border-t border-gray-100 pt-2 mt-2">
+                            <span class="text-gray-500">Basic Salary</span>
+                            <span class="font-bold text-green-600">Rs. {{ number_format($emp->basic_salary, 0) }}</span>
                         </div>
                     </div>
 
-                    @empty
-                        <div class="text-gray-500 p-4">No employee found</div>
-                    @endforelse
+                    <!-- Final Salary -->
+                    <div class="mt-3 p-2 rounded-lg bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-semibold text-gray-600">Final Salary</span>
+                            <span class="text-lg font-bold {{ $finalSalary < 0 ? 'text-red-600' : 'text-green-600' }}">
+                                Rs. {{ number_format($finalSalary, 0) }}
+                            </span>
+                        </div>
+                    </div>
 
+                    <!-- Toggle Button -->
+                    <button onclick="toggleDetails({{ $emp->id }}, this)"
+                        class="mt-3 w-full text-gray-500 text-xs font-medium flex items-center justify-center gap-1 hover:text-red-600 transition py-1">
+                        <svg class="w-3 h-3 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                        View Details
+                    </button>
                 </div>
+
+                <!-- EXPANDABLE DETAILS (Fixed size, opens below) -->
+                <div id="details-{{ $emp->id }}"
+                     class="max-h-0 overflow-hidden transition-all duration-300 bg-gray-50 border-t border-gray-100">
+                    <div class="p-4 space-y-3 text-sm">
+                        <!-- Allowances -->
+                        <div>
+                            <h4 class="text-xs font-bold text-green-600 mb-2">Allowances</h4>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs"><span class="text-gray-500">Bike</span><span>Rs. {{ number_format($emp->bike_allowance ?? 0, 0) }}</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-gray-500">Mobile</span><span>Rs. {{ number_format($emp->mobile_allowance ?? 0, 0) }}</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-gray-500">Overtime</span><span>Rs. {{ number_format($emp->overtime_rate ?? 0, 0) }}</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-gray-500">Commission</span><span>Rs. {{ number_format($emp->commission ?? 0, 0) }}</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-gray-500">Other</span><span>Rs. {{ number_format($emp->other_allowance ?? 0, 0) }}</span></div>
+                                <div class="flex justify-between text-xs font-semibold text-green-700 border-t border-green-200 pt-1 mt-1">
+                                    <span>Night Bonus</span><span>Rs. {{ number_format($night, 0) }}</span>
+                                </div>
+                                <div class="flex justify-between text-xs font-bold bg-green-50 p-1 rounded">
+                                    <span>Total</span><span>Rs. {{ number_format($totalAllowance, 0) }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deductions -->
+                        <div>
+                            <h4 class="text-xs font-bold text-red-600 mb-2">Deductions</h4>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs"><span class="text-gray-500">Late</span><span>Rs. {{ number_format($emp->late_deduction ?? 0, 0) }}</span></div>
+                                <div class="flex justify-between text-xs"><span class="text-gray-500">Absent</span><span>Rs. {{ number_format($emp->absent_deduction ?? 0, 0) }}</span></div>
+                                <div class="flex justify-between text-xs font-semibold text-red-700 border-t border-red-200 pt-1 mt-1">
+                                    <span>Advance</span><span>Rs. {{ number_format($advance, 0) }}</span>
+                                </div>
+                                <div class="flex justify-between text-xs font-bold bg-red-50 p-1 rounded">
+                                    <span>Total</span><span>Rs. {{ number_format($totalDeduction, 0) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD FOOTER -->
+                <div class="px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex gap-2">
+                    <a href="/employees/{{ $emp->id }}/edit"
+                       class="flex-1 text-center bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                        Edit
+                    </a>
+                    <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" onsubmit="return confirm('Delete this employee?')" class="flex-1">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+
             </div>
+
+            @empty
+                <div class="col-span-full text-gray-500 p-8 text-center">
+                    No employees found. Click "Add Employee" to get started.
+                </div>
+            @endforelse
 
         </div>
 
@@ -198,42 +190,31 @@
 
 </div>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
 <script>
-let index = 0;
-
-function move(step) {
-    let slider = document.getElementById('slider');
-    let total = slider.children.length;
-    let visible = 3;
-
-    index += step;
-
-    if (index < 0) index = 0;
-    if (index > total - visible) index = total - visible;
-
-    slider.style.transform = "translateX(-" + (index * 33.33) + "%)";
-}
-
 function toggleDetails(id, btn) {
     let el = document.getElementById('details-' + id);
-    let icon = btn.querySelector('i');
-
+    let icon = btn.querySelector('svg');
+    
     if (el.style.maxHeight && el.style.maxHeight !== "0px") {
         el.style.maxHeight = "0px";
-        icon.classList.remove('rotate-180');
+        if (icon) icon.style.transform = "rotate(0deg)";
     } else {
+        // Close all other open details first
+        document.querySelectorAll('[id^="details-"]').forEach(other => {
+            if (other.id !== 'details-' + id) {
+                other.style.maxHeight = "0px";
+                let otherBtn = document.querySelector(`[onclick*="toggleDetails(${other.id.split('-')[1]})"]`);
+                if (otherBtn) {
+                    let otherIcon = otherBtn.querySelector('svg');
+                    if (otherIcon) otherIcon.style.transform = "rotate(0deg)";
+                }
+            }
+        });
+        
         el.style.maxHeight = el.scrollHeight + "px";
-        icon.classList.add('rotate-180');
+        if (icon) icon.style.transform = "rotate(180deg)";
     }
 }
 </script>
-
-<style>
-.rotate-180 {
-    transform: rotate(180deg);
-}
-</style>
 
 </x-layout>

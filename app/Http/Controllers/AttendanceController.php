@@ -11,9 +11,6 @@ use App\Models\Setting;
 
 class AttendanceController extends Controller
 {
-    // ════════════════════════════════════════════════════════════════
-    // Helper — branch list (Rawalpindi, Lahore, Karachi + DB se)
-    // ════════════════════════════════════════════════════════════════
     protected function getBranches(): array
     {
         $dbBranches = Employee::select('branch')
@@ -22,25 +19,17 @@ class AttendanceController extends Controller
             ->pluck('branch')
             ->toArray();
 
-        // Default branches jo hamesha show hongi
         $defaultBranches = ['Rawalpindi', 'Lahore', 'Karachi'];
-
         $allBranches = array_unique(array_merge($defaultBranches, $dbBranches));
 
         return array_values($allBranches);
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // Helper — ek branch ke employees
-    // ════════════════════════════════════════════════════════════════
     protected function getEmployeesByBranch(string $branch)
     {
         return Employee::where('branch', $branch)->get();
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // Helper — AttendanceSummary se blade-compatible collection
-    // ════════════════════════════════════════════════════════════════
     private function buildSummaryCollection(AttendanceSummary $s): \Illuminate\Support\Collection
     {
         $records = collect();
@@ -102,9 +91,68 @@ class AttendanceController extends Controller
         return $records;
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // MAIN INDEX — HR Dashboard
-    // ════════════════════════════════════════════════════════════════
+    private function rebuildSummaryFromAttendance(int $empId, string $branch, int $month, int $year): void
+    {
+        $isPast = Carbon::create($year, $month)->lt(now()->startOfMonth());
+        if ($isPast) {
+            return;
+        }
+
+        $lateToAbsent = (int) (Setting::where('key', 'late_to_absent')->value('value') ?? 3);
+
+        $records = Attendance::where('employee_id', $empId)
+            ->where('branch', $branch)
+            ->where('month', $month)
+            ->where('year', $year)
+            ->get();
+
+        $presentDays   = $records->where('status', 'present')->count()
+                       + $records->where('status', 'halfday')->count();
+        $absentDays    = $records->where('status', 'absent')->count();
+        $leaveDays     = $records->where('status', 'leave')->count();
+        $lateCount     = $records->where('late', 1)->count();
+        $lateAbsents   = (int) floor($lateCount / max(1, $lateToAbsent));
+        $nightDuties   = (int)   $records->sum('night');
+        $overtimeHours = (float) $records->sum('overtime');
+        $advance       = (float) $records->sum('advance');
+        $bonus         = (float) $records->sum('bonus');
+        $deductions    = (float) $records->sum('deductions');
+
+        $basicSalary = (float) (Employee::find($empId)?->basic_salary ?? 0);
+
+        $existing = AttendanceSummary::where('employee_id', $empId)
+            ->where('branch', $branch)
+            ->where('month', $month)
+            ->where('year', $year)
+            ->first();
+
+        if ($existing && $existing->basic_salary > 0) {
+            $basicSalary = (float) $existing->basic_salary;
+        }
+
+        AttendanceSummary::updateOrCreate(
+            [
+                'employee_id' => $empId,
+                'branch'      => $branch,
+                'month'       => $month,
+                'year'        => $year,
+            ],
+            [
+                'present_days'   => $presentDays,
+                'absent_days'    => $absentDays,
+                'leave_days'     => $leaveDays,
+                'late_count'     => $lateCount,
+                'late_absents'   => $lateAbsents,
+                'night_duties'   => $nightDuties,
+                'overtime_hours' => $overtimeHours,
+                'advance'        => $advance,
+                'bonus'          => $bonus,
+                'deductions'     => $deductions,
+                'basic_salary'   => $basicSalary,
+            ]
+        );
+    }
+
     public function index(Request $request)
     {
         $allBranchNames = $this->getBranches();
@@ -146,7 +194,6 @@ class AttendanceController extends Controller
                         ->get()
                         ->keyBy('employee_id');
 
-        // ✅ FIX: Summary se basic salaries + extras nikaalo
         $summaryBasicSalaries = $summaries->mapWithKeys(function ($s) {
             return [$s->employee_id => (float) $s->basic_salary];
         });
@@ -211,9 +258,6 @@ class AttendanceController extends Controller
         ]);
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // GET SUMMARY DATA — Modal ke liye AJAX
-    // ════════════════════════════════════════════════════════════════
     public function getSummaryData(Request $request)
     {
         $branch = $request->get('branch');
@@ -257,9 +301,6 @@ class AttendanceController extends Controller
         ]);
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // STORE — Aaj ki attendance save
-    // ════════════════════════════════════════════════════════════════
     public function store(Request $request)
     {
         $branch = $request->input('branch');
@@ -300,12 +341,16 @@ class AttendanceController extends Controller
             );
         }
 
+        $isPast = Carbon::create($year, $month)->lt(now()->startOfMonth());
+        if (!$isPast) {
+            foreach (array_keys($request->input('attendance', [])) as $empId) {
+                $this->rebuildSummaryFromAttendance((int) $empId, $branch, $month, $year);
+            }
+        }
+
         return redirect()->back()->with('success', "Attendance save ho gayi — {$date} ({$branch})");
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // BULK STORE — Modal se monthly/past month data save
-    // ════════════════════════════════════════════════════════════════
     public function bulkStore(Request $request)
     {
         $branch       = $request->input('branch');
@@ -359,9 +404,6 @@ class AttendanceController extends Controller
             ->with('success', "Data save ho gaya — {$branch}, {$monthName}");
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // MONTHLY SUMMARY SAVE
-    // ════════════════════════════════════════════════════════════════
     public function monthlySummarySave(Request $request)
     {
         $branch       = $request->input('branch');
@@ -374,7 +416,6 @@ class AttendanceController extends Controller
             $lateCount   = (int) $request->input("late.{$empId}", 0);
             $lateAbsents = (int) floor($lateCount / max(1, $lateToAbsent));
 
-            // ✅ FIX: Basic salary pehle existing summary se lo
             $existingSummary = AttendanceSummary::where('employee_id', $empId)
                 ->where('branch', $branch)
                 ->where('month', $month)
@@ -415,9 +456,6 @@ class AttendanceController extends Controller
             ->with('success', "Monthly summary save ho gayi — {$branch}, {$monthName}");
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // SETTINGS UPDATE
-    // ════════════════════════════════════════════════════════════════
     public function updateSettings(Request $request)
     {
         $request->validate(['late_to_absent' => 'required|integer|min:1|max:10']);
@@ -430,9 +468,6 @@ class AttendanceController extends Controller
         return redirect()->back()->with('success', 'Late rule update ho gai!');
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // DOWNLOAD TEMPLATE
-    // ════════════════════════════════════════════════════════════════
     public function downloadTemplate(Request $request)
     {
         $branch      = $request->get('branch');
@@ -474,9 +509,6 @@ class AttendanceController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // EMPLOYEE MONTHLY
-    // ════════════════════════════════════════════════════════════════
     public function employeeMonthly($id)
     {
         $month = (int) request('month', now()->month);
@@ -488,5 +520,91 @@ class AttendanceController extends Controller
             ->get();
 
         return response()->json($attendance);
+    }
+
+    public function report(Request $request)
+    {
+        $month  = $request->get('month', now()->format('Y-m'));
+        $search = $request->get('search');
+
+        [$year, $mon] = explode('-', $month);
+
+        $query = Employee::query();
+        if ($search) {
+            $query->where('name', 'like', "%$search%");
+        }
+        $employees = $query->get();
+
+        $summaries = $employees->map(function ($emp) use ($year, $mon) {
+            $atts = Attendance::where('employee_id', $emp->id)
+                ->whereYear('date', $year)
+                ->whereMonth('date', $mon)
+                ->get();
+
+            return [
+                'employee_id' => $emp->id,
+                'name'        => $emp->name,
+                'present'     => $atts->where('status', 'present')->count(),
+                'absent'      => $atts->where('status', 'absent')->count(),
+                'leave'       => $atts->where('status', 'leave')->count(),
+            ];
+        });
+
+        $months = collect(range(0, 11))->map(fn($i) => now()->subMonths($i)->format('Y-m'));
+
+        return view('payroll.report', compact('summaries', 'months'));
+    }
+
+   public function getDates(Request $request)
+{
+    [$year, $mon] = explode('-', $request->month);
+
+    $daysInMonth = Carbon::create($year, $mon)->daysInMonth;
+    $dates = [];
+
+    for ($d = 1; $d <= $daysInMonth; $d++) {
+        $date = Carbon::create($year, $mon, $d);
+
+        // ❌ REMOVE THIS
+        // if ($date->isSunday()) continue;
+
+        $dates[] = $date->format('Y-m-d');
+    }
+
+    $existing = Attendance::where('employee_id', $request->employee_id)
+        ->whereYear('date', $year)
+        ->whereMonth('date', $mon)
+        ->get()
+        ->keyBy('date');
+
+    $result = collect($dates)->map(function ($date) use ($existing) {
+        $rec = $existing->get($date);
+        return [
+            'date'   => $date,
+            'status' => $rec ? $rec->status : 'present',
+        ];
+    });
+
+    return response()->json($result);
+}
+
+    public function bulkUpdate(Request $request)
+    {
+        foreach ($request->updates as $u) {
+            Attendance::updateOrCreate(
+                [
+                    'employee_id' => $request->employee_id,
+                    'date'        => $u['date'],
+                ],
+                [
+                    'status' => $u['status'],
+                    'month'  => (int) date('m', strtotime($u['date'])),
+                    'year'   => (int) date('Y', strtotime($u['date'])),
+                    'branch' => Employee::find($request->employee_id)?->branch ?? '',
+                ]
+            );
+        }
+
+        return response()->json(['ok' => true]);
     }
 }
